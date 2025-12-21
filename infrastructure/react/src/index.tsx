@@ -1,7 +1,6 @@
 import { createCliRenderer } from "@opentui/core";
 import { createRoot, useKeyboard, useRenderer } from "@opentui/react";
 import { useEffect } from "react";
-import { ThemeSwitcher } from "./components/molecules/theme-switcher";
 import { Layout } from "./components/organisms/layout";
 import { PullRequestManager } from "./components/organisms/pull-request-manager";
 import { ViewRequestManager } from "./components/organisms/view-request-manager";
@@ -65,7 +64,6 @@ function App() {
 					<ViewRequestManager />
 					<PullRequestManager />
 				</box>
-				<ThemeSwitcher />
 			</box>
 		</Layout>
 	);

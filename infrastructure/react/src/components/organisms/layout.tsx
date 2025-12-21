@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import { ToastContainer } from "../molecules/toast-container";
 import { useThemeStore } from "../../stores/theme.store";
+import { ToastContainer } from "../molecules/toast-container";
+import { AppFooter } from "../molecules/app-footer";
 
 type LayoutProps = {
 	children: ReactNode;
@@ -12,6 +13,7 @@ export function Layout({ children }: LayoutProps) {
 		<box backgroundColor={currentTheme.background}>
 			{children}
 			<ToastContainer />
+			<AppFooter />
 		</box>
 	);
 }

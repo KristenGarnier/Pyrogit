@@ -1,5 +1,5 @@
 import { useKeyboard } from "@opentui/react";
-import { themeMap, useThemeStore } from "../../stores/theme.store";
+import { type themeMap, useThemeStore } from "../../stores/theme.store";
 import { useToastActions } from "../../stores/toast.store";
 
 const THEME_KEYS: Record<string, string> = {
