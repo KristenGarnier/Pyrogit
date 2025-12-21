@@ -1,4 +1,4 @@
-import { catppuccinMochaTheme } from "../../themes/captuccin-mocha";
+import { useTheme } from "../../hooks/use-theme";
 import type { ColumnKey } from "../../utils/column-width-calculator";
 
 interface PullRequestTableHeaderProps {
@@ -8,36 +8,38 @@ interface PullRequestTableHeaderProps {
 export function PullRequestTableHeader({
 	widths,
 }: PullRequestTableHeaderProps) {
+	const { theme } = useTheme();
+
 	return (
 		<box flexDirection="row" gap={1}>
 			{/* ID column */}
 			<box width={widths.ID}>
-				<text fg={catppuccinMochaTheme.muted}>ID</text>
+				<text fg={theme.muted}>ID</text>
 			</box>
 
 			{/* Status column */}
 			<box width={widths.Status}>
-				<text fg={catppuccinMochaTheme.muted}></text>
+				<text fg={theme.muted}></text>
 			</box>
 
 			{/* Title column */}
 			<box width={widths.Title}>
-				<text fg={catppuccinMochaTheme.muted}>Title</text>
+				<text fg={theme.muted}>Title</text>
 			</box>
 
 			{/* Author column */}
 			<box width={widths.Author}>
-				<text fg={catppuccinMochaTheme.muted}>Author</text>
+				<text fg={theme.muted}>Author</text>
 			</box>
 
 			{/* Target column */}
 			<box width={widths.Target}>
-				<text fg={catppuccinMochaTheme.muted}>Target</text>
+				<text fg={theme.muted}>Target</text>
 			</box>
 
 			{/* Review status column */}
 			<box width={widths.Review}>
-				<text fg={catppuccinMochaTheme.muted}>Review</text>
+				<text fg={theme.muted}>Review</text>
 			</box>
 		</box>
 	);

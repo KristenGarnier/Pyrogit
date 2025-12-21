@@ -1,8 +1,10 @@
 import { type InputRenderable, TextAttributes } from "@opentui/core";
 import { useKeyboard } from "@opentui/react";
 import { useRef, useState } from "react";
+import { useTheme } from "../../hooks/use-theme";
 
 export function App() {
+	const { theme } = useTheme();
 	const inputRef = useRef<InputRenderable>(null);
 	const [value, setValue] = useState("");
 
@@ -29,7 +31,7 @@ export function App() {
 				</box>
 
 				<box flexDirection="row">
-					<text fg={"red"}>{"*"}</text>
+					<text fg={theme.error}>{"*"}</text>
 					<text attributes={TextAttributes.DIM}>{value}</text>
 				</box>
 			</scrollbox>

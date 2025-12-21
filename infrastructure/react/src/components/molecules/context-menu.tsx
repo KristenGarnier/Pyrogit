@@ -1,7 +1,7 @@
 import { useKeyboard } from "@opentui/react";
 import { useScopedStore } from "../../hooks/use-scoped-store";
+import { useTheme } from "../../hooks/use-theme";
 import { useTabFocus } from "../../stores/tab.focus.store";
-import { catppuccinMochaTheme } from "../../themes/captuccin-mocha";
 import {
 	isAction,
 	matchKey,
@@ -21,6 +21,7 @@ type ContextMenuProps = {
 };
 
 export function ContextMenu({ id, options }: ContextMenuProps) {
+	const { theme } = useTheme();
 	const tabFocusStore = useTabFocus();
 	const itemFocusStore = useScopedStore(options[0]);
 
@@ -49,14 +50,14 @@ export function ContextMenu({ id, options }: ContextMenuProps) {
 			top={0}
 			right={0}
 			flexDirection="column"
-			backgroundColor={catppuccinMochaTheme.highlightBg}
+			backgroundColor={theme.highlightBg}
 		>
 			{options.map((item) => (
 				<box
 					width={"100%"}
 					{...(itemFocusStore.current?.data.id === item.id &&
 						tabFocusStore.current === id && {
-							backgroundColor: catppuccinMochaTheme.muted,
+							backgroundColor: theme.muted,
 						})}
 					flexDirection="row"
 					paddingLeft={1}

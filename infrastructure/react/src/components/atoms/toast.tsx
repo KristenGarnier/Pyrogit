@@ -1,4 +1,4 @@
-import { catppuccinMochaTheme } from "../../themes/captuccin-mocha";
+import { useTheme } from "../../hooks/use-theme";
 
 type ToastType = "info" | "success" | "warning" | "error";
 
@@ -7,17 +7,19 @@ type ToastProps = {
 	type?: ToastType;
 };
 
-const typeColors = {
-	info: catppuccinMochaTheme.info,
-	success: catppuccinMochaTheme.success,
-	warning: catppuccinMochaTheme.warning,
-	error: catppuccinMochaTheme.error,
-};
-
 export function Toast({ message, type = "info" }: ToastProps) {
+	const { theme } = useTheme();
+
+	const typeColors = {
+		info: theme.info,
+		success: theme.success,
+		warning: theme.warning,
+		error: theme.error,
+	};
+
 	return (
 		<box
-			backgroundColor={catppuccinMochaTheme.highlightBg}
+			backgroundColor={theme.highlightBg}
 			paddingRight={1}
 			gap={1}
 			flexDirection="row"

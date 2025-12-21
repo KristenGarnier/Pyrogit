@@ -1,15 +1,15 @@
 import clipboard from "clipboardy";
 import open from "open";
 import type { ChangeRequest } from "../../../../../domain/change-request";
+import { useTheme } from "../../hooks/use-theme";
 import { useTabFocus } from "../../stores/tab.focus.store";
-import { catppuccinMochaTheme } from "../../themes/captuccin-mocha";
+import { useToastActions } from "../../stores/toast.store";
 import type { ColumnKey } from "../../utils/column-width-calculator";
 import { truncateText } from "../../utils/column-width-calculator";
 import { throttle } from "../../utils/throttle";
 import { StatusIcon } from "../atoms/status-icon";
 import { ContextMenu, type ContextMenuOption } from "./context-menu";
 import { ReviewStatus } from "./review-status";
-import { useToastActions } from "../../stores/toast.store";
 
 interface PullRequestItemProps {
 	item: ChangeRequest;
@@ -22,6 +22,7 @@ export function PullRequestItem({
 	widths,
 	selected,
 }: PullRequestItemProps) {
+	const { theme } = useTheme();
 	const tabFocusStore = useTabFocus();
 	const toastStore = useToastActions();
 
@@ -54,12 +55,12 @@ export function PullRequestItem({
 			key={item.id.number}
 			position="relative"
 			{...(selected && {
-				backgroundColor: catppuccinMochaTheme.highlightBg,
+				backgroundColor: theme.highlightBg,
 			})}
 		>
 			{/* ID column */}
 			<box width={widths.ID} flexDirection="row">
-				<text fg={catppuccinMochaTheme.muted}>#</text>
+				<text fg={theme.muted}>#</text>
 				<text>{item.id.number}</text>
 			</box>
 

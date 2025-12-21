@@ -16,7 +16,7 @@ export function PullRequestManager() {
 	const pullRequestStore = useChangeRequestStore();
 	const tabFocusStore = useTabFocus();
 	const itemFocusStore = useChangeRequestFocusStore();
-	const prs = pullRequestStore.getFilteredPRs();
+	const prs = pullRequestStore.getPRs();
 
 	useKeyboard((key) => {
 		if (tabFocusStore.current !== Tabs.PULL_REQUESTS) return;

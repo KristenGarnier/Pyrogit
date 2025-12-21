@@ -1,7 +1,8 @@
+import { useTheme } from "../../hooks/use-theme";
 import { Tabs, useTabFocus } from "../../stores/tab.focus.store";
-import { catppuccinMochaTheme } from "../../themes/captuccin-mocha";
 
 export function ViewRequestManager() {
+	const { theme } = useTheme();
 	const tabFocusStore = useTabFocus();
 
 	return (
@@ -11,8 +12,8 @@ export function ViewRequestManager() {
 			borderStyle="rounded"
 			borderColor={
 				tabFocusStore.current === Tabs.VIEWS
-					? catppuccinMochaTheme.focusedBorder
-					: catppuccinMochaTheme.border
+					? theme.focusedBorder
+					: theme.border
 			}
 		>
 			<text>Example view</text>

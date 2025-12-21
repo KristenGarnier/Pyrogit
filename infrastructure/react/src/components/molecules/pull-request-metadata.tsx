@@ -1,3 +1,5 @@
+import { useTheme } from "../../hooks/use-theme";
+
 type PullRequestMetadataProps = {
 	number: number;
 	author: string;
@@ -9,10 +11,12 @@ export function PullRequestMetadata({
 	author,
 	target,
 }: PullRequestMetadataProps) {
+	const { theme } = useTheme();
+
 	return (
 		<>
 			<box flexDirection="row">
-				<text fg={"red"}>*</text>
+				<text fg={theme.error}>*</text>
 				<text>{number}</text>
 			</box>
 			<text>{author}</text>
