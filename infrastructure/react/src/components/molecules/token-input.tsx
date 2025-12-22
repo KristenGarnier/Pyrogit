@@ -18,7 +18,7 @@ export function TokenInput({ onSuccess }: TokenInputProps) {
 	async function submitToken() {
 		setLoading(true);
 		const pyro = new Pyrogit();
-		const [instance, error] = await pyro.init(value);
+		const [error, instance] = await pyro.init(value);
 		if (error) {
 			setLoading(false);
 			toast.error(error.message);

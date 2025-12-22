@@ -8,18 +8,20 @@ export class FileStorage implements Storage<string> {
 	async read(): Promise<ErrorValue<string>> {
 		try {
 			const content = await fs.readFile(this.filePath, "utf8");
-			return [content, null];
+			return [null, content];
 		} catch (e) {
-			return [null, e instanceof Error ? e : new Error(String(e))];
+			const error = e instanceof Error ? e : new Error(String(e));
+			return [error, null];
 		}
 	}
 
 	async write(content: string): Promise<ErrorValue<boolean>> {
 		try {
 			await fs.writeFile(this.filePath, content, "utf8");
-			return [true, null];
+			return [null, true];
 		} catch (e) {
-			return [false, e instanceof Error ? e : new Error(String(e))];
+			const error = e instanceof Error ? e : new Error(String(e));
+			return [error, null];
 		}
 	}
 }

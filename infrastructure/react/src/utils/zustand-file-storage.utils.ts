@@ -3,7 +3,7 @@ import type { FileStorage } from "../../../services/storage/file.storage";
 export function zustandFileStorage(storage: FileStorage) {
 	return () => ({
 		async getItem(_name: string) {
-			const [prs, error] = await storage.read();
+			const [error, prs] = await storage.read();
 			if (error || !prs) return "{}";
 
 			return prs;

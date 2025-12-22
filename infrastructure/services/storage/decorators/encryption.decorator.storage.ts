@@ -57,25 +57,27 @@ export class EncryptedStorage implements Storage<string> {
 
 			aesKey.fill(0);
 
-			return await this.storage.write(JSON.stringify(payload));
+			const [error, result] = await this.storage.write(JSON.stringify(payload));
+			return error ? [error, null] : [null, result];
 		} catch (e) {
-			return [false, e instanceof Error ? e : new Error(String(e))];
+			const error = e instanceof Error ? e : new Error(String(e));
+			return [error, null];
 		}
 	}
 
 	async read(): Promise<ErrorValue<string>> {
 		await this.initPromise;
 
-		const [raw, err] = await this.storage.read();
+		const [err, raw] = await this.storage.read();
 		if (err || !raw) {
-			return [null, err ?? new Error("Empty storage")];
+			return [err ?? new Error("Empty storage"), null];
 		}
 
 		try {
 			const payload = JSON.parse(raw) as Payload;
 
 			if (payload.version !== 1) {
-				return [null, new Error("Unsupported payload version")];
+				return [new Error("Unsupported payload version"), null];
 			}
 
 			const { integrity, ...payloadWithoutIntegrity } = payload as Payload;
@@ -83,18 +85,18 @@ export class EncryptedStorage implements Storage<string> {
 
 			if (!this.keyManager.verifyIntegrity(dataForIntegrity, integrity)) {
 				return [
-					null,
 					new Error("Payload integrity check failed - possible tampering"),
+					null,
 				];
 			}
 
 			const age = Date.now() - (payload.timestamp ?? 0);
 			if (age > TOKEN_MAX_AGE_MS) {
 				return [
-					null,
 					new Error(
 						`Token expired (age: ${Math.floor(age / (24 * 60 * 60 * 1000))} days)`,
 					),
+					null,
 				];
 			}
 
@@ -117,9 +119,9 @@ export class EncryptedStorage implements Storage<string> {
 
 			aesKey.fill(0);
 
-			return [decrypted.toString("utf8"), null];
+			return [null, decrypted.toString("utf8")];
 		} catch (e) {
-			return [null, e instanceof Error ? e : new Error(String(e))];
+			return [e instanceof Error ? e : new Error(String(e)), null];
 		}
 	}
 }

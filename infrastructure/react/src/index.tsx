@@ -30,7 +30,7 @@ function App() {
 	useEffect(() => {
 		async function run() {
 			loadingStore.start("Loading the app");
-			const [instance, error] = await Pyro.init();
+			const [error, instance] = await Pyro.init();
 			if (error) {
 				if (error.message === "No token available") {
 					tabFocusStore.focusCustom("ask-token");

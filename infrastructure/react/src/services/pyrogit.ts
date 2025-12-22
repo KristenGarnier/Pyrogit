@@ -11,8 +11,8 @@ import {
 import type { Storage } from "../../../services/storage/storage.interface";
 
 export type ErrorValue<T> =
-	| [result: null, error: Error]
-	| [result: T, error: null];
+	| [error: Error, result: null]
+	| [error: null, result: T];
 
 export class Pyrogit {
 	private _pyro: ChangeRequestService | null = null;
@@ -31,18 +31,18 @@ export class Pyrogit {
 	}
 
 	get pyro(): ErrorValue<ChangeRequestService> {
-		if (!this._pyro) return [null, new Error("Pyro not yet initialized")];
-		return [this._pyro, null];
+		if (!this._pyro) return [new Error("Pyro not yet initialized"), null];
+		return [null, this._pyro];
 	}
 
 	get isInit(): ErrorValue<typeof this._isInit> {
-		return [this._isInit, null];
+		return [null, this._isInit];
 	}
 
 	async init(token?: string): Promise<ErrorValue<typeof this._pyro>> {
 		try {
 			if (!token && !(await this.checkTokenFromStorage())) {
-				return [null, new Error("No token available")];
+				return [new Error("No token available"), null];
 			}
 
 			this._pyro = init(token ?? (await this.retrieveTokenFromStorage()));
@@ -50,17 +50,17 @@ export class Pyrogit {
 
 			if (token) void this.storage.write(token);
 
-			return [this._pyro, null];
+			return [null, this._pyro];
 		} catch (error: unknown) {
 			let err = new Error("Unspecified Error");
 			if (!(error instanceof Error)) err = new Error(String(error));
 
-			return [null, error instanceof Error ? error : err];
+			return [error instanceof Error ? error : err, null];
 		}
 	}
 
 	private async retrieveTokenFromStorage(): Promise<string> {
-		const [token, error] = await this.storage.read();
+		const [error, token] = await this.storage.read();
 		if (error) throw error;
 		if (!token || token === "")
 			throw new Error("Token is null or empty in the storage");
@@ -69,7 +69,7 @@ export class Pyrogit {
 	}
 
 	private async checkTokenFromStorage(): Promise<boolean> {
-		const [token, error] = await this.storage.read();
+		const [error, token] = await this.storage.read();
 		if (!token || error || token === "") {
 			return false;
 		}

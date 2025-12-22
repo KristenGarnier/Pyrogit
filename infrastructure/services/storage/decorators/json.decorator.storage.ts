@@ -6,14 +6,14 @@ export class JSONParserStorage<U> implements Storage<U> {
 
 	async read(): Promise<ErrorValue<U>> {
 		try {
-			const [data, error] = await this.storage.read();
-			if (error) return [null, error];
-			if (!data) return [null, new Error("No data in the file")];
+			const [error, data] = await this.storage.read();
+			if (error) return [error, null];
+			if (!data) return [new Error("No data in the file"), null];
 
 			const parsed = JSON.parse(data);
-			return [parsed as U, null];
+			return [null, parsed as U];
 		} catch (e) {
-			return [null, e instanceof Error ? e : new Error(String(e))];
+			return [e instanceof Error ? e : new Error(String(e)), null];
 		}
 	}
 
@@ -22,7 +22,7 @@ export class JSONParserStorage<U> implements Storage<U> {
 			const stringContent = JSON.stringify(content);
 			return this.storage.write(stringContent);
 		} catch (e) {
-			return [false, e instanceof Error ? e : new Error(String(e))];
+			return [e instanceof Error ? e : new Error(String(e)), null];
 		}
 	}
 }
