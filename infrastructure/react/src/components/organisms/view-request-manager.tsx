@@ -16,7 +16,7 @@ export function ViewRequestManager() {
 					: theme.border
 			}
 		>
-			<text>Example view</text>
+			<text fg={theme.foreground}>Example view</text>
 		</scrollbox>
 	);
 }

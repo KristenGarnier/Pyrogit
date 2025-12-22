@@ -61,7 +61,7 @@ export function PullRequestItem({
 			{/* ID column */}
 			<box width={widths.ID} flexDirection="row">
 				<text fg={theme.muted}>#</text>
-				<text>{item.id.number}</text>
+				<text fg={theme.foreground}>{item.id.number}</text>
 			</box>
 
 			{/* Status column */}
@@ -71,17 +71,19 @@ export function PullRequestItem({
 
 			{/* Title column */}
 			<box width={widths.Title}>
-				<text>{truncateText(item.title, widths.Title)}</text>
+				<text fg={theme.foreground}>
+					{truncateText(item.title, widths.Title)}
+				</text>
 			</box>
 
 			{/* Author column */}
 			<box width={widths.Author}>
-				<text>{item.author.login}</text>
+				<text fg={theme.foreground}>{item.author.login}</text>
 			</box>
 
 			{/* Target column */}
 			<box width={widths.Target}>
-				<text>{item.taget}</text>
+				<text fg={theme.foreground}>{item.taget}</text>
 			</box>
 
 			{/* Review status column */}

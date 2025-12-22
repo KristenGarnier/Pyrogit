@@ -17,10 +17,10 @@ export function PullRequestMetadata({
 		<>
 			<box flexDirection="row">
 				<text fg={theme.error}>*</text>
-				<text>{number}</text>
+				<text fg={theme.foreground}>{number}</text>
 			</box>
-			<text>{author}</text>
-			<text>{target}</text>
+			<text fg={theme.foreground}>{author}</text>
+			<text fg={theme.foreground}>{target}</text>
 		</>
 	);
 }

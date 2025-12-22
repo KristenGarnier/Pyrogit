@@ -25,7 +25,7 @@ export function Toast({ message, type = "info" }: ToastProps) {
 			flexDirection="row"
 		>
 			<box width={1} backgroundColor={typeColors[type]}></box>
-			<text>{message}</text>
+			<text fg={theme.foreground}>{message}</text>
 		</box>
 	);
 }

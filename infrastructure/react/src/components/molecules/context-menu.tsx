@@ -65,8 +65,8 @@ export function ContextMenu({ id, options }: ContextMenuProps) {
 					gap={1}
 					key={item.id}
 				>
-					<text>{item.icon}</text>
-					<text>{item.title}</text>
+					<text fg={theme.foreground}>{item.icon}</text>
+					<text fg={theme.foreground}>{item.title}</text>
 				</box>
 			))}
 		</box>

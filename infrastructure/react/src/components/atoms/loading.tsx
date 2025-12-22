@@ -1,11 +1,13 @@
 import { TextAttributes } from "@opentui/core";
 import { useEffect, useState } from "react";
+import { useTheme } from "../../hooks/use-theme";
 
 const frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"] as const;
 
 export function LoadingScreen(props: { title?: string; subtitle?: string }) {
 	const { title = "Loading", subtitle } = props;
 	const [i, setI] = useState(0);
+	const { theme } = useTheme();
 
 	useEffect(() => {
 		const t = setInterval(() => setI((x) => (x + 1) % frames.length), 80);
@@ -25,9 +27,11 @@ export function LoadingScreen(props: { title?: string; subtitle?: string }) {
 			left={0}
 		>
 			<box border padding={2} width={40} flexDirection="column" gap={1}>
-				<text>{`${frame} ${title}...`}</text>
+				<text fg={theme.foreground}>{`${frame} ${title}...`}</text>
 				{subtitle ? (
-					<text attributes={TextAttributes.DIM}>{subtitle}</text>
+					<text fg={theme.muted} attributes={TextAttributes.DIM}>
+						{subtitle}
+					</text>
 				) : null}
 			</box>
 		</box>
@@ -46,12 +50,13 @@ export function LoadingScreenProgress(props: {
 }) {
 	const { title = "Loading", progress } = props;
 	const pct = Math.round(Math.max(0, Math.min(1, progress)) * 100);
+	const { theme } = useTheme();
 
 	return (
 		<box width="100%" height="100%" alignItems="center" justifyContent="center">
 			<box border padding={2} width={48} flexDirection="column" gap={1}>
-				<text>{title}</text>
-				<text>{`${progressBar(progress)} ${pct}%`}</text>
+				<text fg={theme.foreground}>{title}</text>
+				<text fg={theme.foreground}>{`${progressBar(progress)} ${pct}%`}</text>
 			</box>
 		</box>
 	);

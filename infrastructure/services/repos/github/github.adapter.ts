@@ -10,8 +10,6 @@ import type {
 } from "../../../../domain/change-request";
 import type { ChangeRequestQuery } from "../../../../domain/change-request-query";
 
-// Ici tu brancheras Octokit (REST) ou GraphQL
-
 export class GitHubChangeRequestRepository implements ChangeRequestRepository {
 	constructor(
 		private readonly octokit: Octokit,
@@ -31,8 +29,6 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
 			per_page: 100,
 		});
 
-		// naïf mais clair : pour chaque PR, récupérer les reviews
-		// (on optimisera plus tard via GraphQL / batch / p-limit)
 		const out: ChangeRequest[] = [];
 		for (const pr of prs.data) {
 			const reviews = await this.octokit.pulls.listReviews({
