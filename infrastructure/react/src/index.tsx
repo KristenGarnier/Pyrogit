@@ -3,9 +3,9 @@ import { createRoot, useKeyboard, useRenderer } from "@opentui/react";
 import { useEffect } from "react";
 import type { ChangeRequestService } from "../../../application/usecases/change-request.service";
 import { TokenInput } from "./components/molecules/token-input";
+import { HelpModal } from "./components/molecules/help-modal";
 import { Layout } from "./components/organisms/layout";
 import { PullRequestManager } from "./components/organisms/pull-request-manager";
-import { ViewRequestManager } from "./components/organisms/view-request-manager";
 import { Pyrogit } from "./services/pyrogit";
 import { useChangeRequestStore } from "./stores/changeRequest.store";
 import { useLoadingStore } from "./stores/loading";
@@ -56,6 +56,10 @@ function App() {
 		if (isAction(key.name, "tab")) {
 			tabFocusStore.cycle();
 		}
+
+		if (key.name === "?") {
+			tabFocusStore.focusCustom("help");
+		}
 	});
 
 	const handleTokenSuccess = (instance: ChangeRequestService) => {
@@ -88,6 +92,7 @@ function App() {
 				<TokenInput onSuccess={handleTokenSuccess} />
 			)}
 			{tabFocusStore.current === "choose-theme" && <ThemeChooser />}
+			{tabFocusStore.current === "help" && <HelpModal />}
 		</Layout>
 	);
 }

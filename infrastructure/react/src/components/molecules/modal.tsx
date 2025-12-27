@@ -59,11 +59,13 @@ function ModalHeader({ title, description, icon }: ModalHeaderProps) {
 
 	return (
 		<>
-			<box marginBottom={1}>
-				<text fg={theme.foreground}>
-					{icon && `${icon} `}
-					{title}
-				</text>
+			<box marginBottom={1} flexDirection="row">
+				{icon && (
+					<text marginRight={1} fg={theme.primary}>
+						{icon}
+					</text>
+				)}
+				<text fg={theme.foreground}>{title}</text>
 			</box>
 
 			{description && (

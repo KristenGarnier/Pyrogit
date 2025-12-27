@@ -14,7 +14,7 @@ export const keyDefintion = {
 	...xDirection,
 	...yDirections,
 	return: ["return"],
-	escape: ["escape"],
+	escape: ["escape", "q"],
 	tab: ["tab"],
 };
 
@@ -39,7 +39,12 @@ export function matchKey(key: string): SupportedActions | null {
 	return mappedKey;
 }
 
-export function isAction(key: string, action: SupportedActions): boolean {
+export function isAction(
+	key: string,
+	action: SupportedActions | SupportedActions[],
+): boolean {
 	const foundAction = matchKey(key);
+	if (Array.isArray(action))
+		return action.includes(foundAction as SupportedActions);
 	return foundAction === action;
 }

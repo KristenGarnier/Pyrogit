@@ -13,6 +13,10 @@ export function AppFooter() {
 				<em>v0.0.1</em>
 			</text>
 			<ThemeSwitcher />
+
+			<text marginLeft={1} fg={currentTheme.muted}>
+				[?] Help
+			</text>
 		</box>
 	);
 }

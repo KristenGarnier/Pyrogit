@@ -74,6 +74,7 @@ export function ThemeChooser() {
 		>
 			<Modal.Header
 				title="Themes"
+				icon=""
 				description="Please choose your theme from the themes down below. Preview will be shown while focusing on a theme"
 			/>
 
