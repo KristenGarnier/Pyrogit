@@ -36,7 +36,12 @@ export const useTabFocus = create<TabFocusState>((set) => ({
 
 	focusCustom: (name: string) =>
 		set((state) => {
-			return { current: name, previous: state.current };
+			const isPane = TAB_VALUES.includes(state.current as TabValue);
+
+			return {
+				current: name,
+				previous: isPane ? state.current : state.previous,
+			};
 		}),
 
 	stopCustom: () =>
