@@ -12,6 +12,7 @@ import { useLoadingStore } from "./stores/loading";
 import { useTabFocus } from "./stores/tab.focus.store";
 import { useToastActions } from "./stores/toast.store";
 import { isAction } from "./utils/key-mapper";
+import { ThemeChooser } from "./components/molecules/theme-chooser";
 
 const Pyro = new Pyrogit();
 
@@ -80,12 +81,14 @@ function App() {
 		<Layout>
 			<box flexDirection="column">
 				<box flexDirection="row">
-					<ViewRequestManager />
 					<PullRequestManager />
 				</box>
 			</box>
 			{tabFocusStore.current === "ask-token" && (
 				<TokenInput onSuccess={handleTokenSuccess} />
+			)}
+			{tabFocusStore.current === "choose-theme" && (
+				<ThemeChooser onSuccess={handleTokenSuccess} />
 			)}
 		</Layout>
 	);

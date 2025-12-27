@@ -98,6 +98,8 @@ export const themeMap = {
 	vitesse: vitesseTheme,
 };
 
+export type KeyThemeMap = keyof typeof themeMap;
+
 type ThemeStore = {
 	currentTheme: Theme;
 	themeName: string;

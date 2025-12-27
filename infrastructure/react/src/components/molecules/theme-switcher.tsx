@@ -1,6 +1,6 @@
 import { useKeyboard } from "@opentui/react";
-import { type themeMap, useThemeStore } from "../../stores/theme.store";
-import { useToastActions } from "../../stores/toast.store";
+import { useThemeStore } from "../../stores/theme.store";
+import { useTabFocus } from "../../stores/tab.focus.store";
 
 const THEME_KEYS: Record<string, string> = {
 	"1": "catppuccin-mocha",
@@ -33,26 +33,12 @@ const THEME_KEYS: Record<string, string> = {
 };
 
 export function ThemeSwitcher() {
-	const { currentTheme, themeName, switchToTheme, getAvailableThemes } =
-		useThemeStore();
-	const toastStore = useToastActions();
+	const { currentTheme, themeName } = useThemeStore();
+	const tabFocusStore = useTabFocus();
 
 	useKeyboard((key) => {
 		if (key.name === "t") {
-			const themes = getAvailableThemes();
-			const themeList = themes.slice(0, 10).join(", ");
-			const remaining =
-				themes.length > 10 ? `... and ${themes.length - 10} more` : "";
-
-			toastStore.info(`Current theme: ${themeName}`);
-			toastStore.info(`Available themes: ${themeList}${remaining}`);
-			toastStore.info("Press 1-0, q-j for themes");
-		}
-
-		const themeKey = THEME_KEYS[key.name];
-		if (themeKey) {
-			switchToTheme(themeKey as keyof typeof themeMap);
-			toastStore.success(`Switched to ${themeKey}`);
+			tabFocusStore.focusCustom("choose-theme");
 		}
 	});
 
