@@ -1,5 +1,5 @@
 import { createCliRenderer } from "@opentui/core";
-import { createRoot, useKeyboard, useRenderer } from "@opentui/react";
+import { createRoot, useKeyboard } from "@opentui/react";
 import { useEffect } from "react";
 import type { ChangeRequestService } from "../../../application/usecases/change-request.service";
 import { TokenInput } from "./components/molecules/token-input";
@@ -24,11 +24,11 @@ function App() {
 	const toast = useToastActions();
 	const userStore = useUserStore();
 
-	const renderer = useRenderer();
-
-	useEffect(() => {
-		renderer.console.show();
-	}, [renderer.console.show]);
+	// const renderer = useRenderer();
+	//
+	// useEffect(() => {
+	// 	renderer.console.show();
+	// }, [renderer.console.show]);
 
 	useEffect(() => {
 		async function run() {
