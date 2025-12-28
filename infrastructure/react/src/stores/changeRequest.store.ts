@@ -12,14 +12,11 @@ const storage = new FileStorage(
 );
 
 interface ChangeRequestStore {
-	// data
 	prs: ChangeRequest[];
 
-	// ui state
 	loading: boolean;
 	error: string | null;
 
-	// actions
 	setPRs(prs: ChangeRequest[]): void;
 	upsertPR(pr: ChangeRequest): void;
 	clearPRs(): void;
@@ -27,7 +24,6 @@ interface ChangeRequestStore {
 	setLoading(loading: boolean): void;
 	setError(error: string | null): void;
 
-	// selectors helpers
 	getPRs(): ChangeRequest[];
 }
 

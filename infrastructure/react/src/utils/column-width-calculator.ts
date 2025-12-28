@@ -1,4 +1,5 @@
 import type { ChangeRequest } from "../../../../domain/change-request";
+import { getReviewStatusConfig } from "./review-status.utils";
 
 export const COLUMN_CONFIG = {
 	ID: { minWidth: 1, maxWidth: 10 },
@@ -6,7 +7,7 @@ export const COLUMN_CONFIG = {
 	Title: { minWidth: 30, maxWidth: 60 },
 	Author: { minWidth: 15, maxWidth: 25 },
 	Target: { minWidth: 6, maxWidth: 18 },
-	Review: { minWidth: 12, maxWidth: 15 },
+	Review: { minWidth: 12, maxWidth: 25 },
 };
 
 export type ColumnKey = keyof typeof COLUMN_CONFIG;
@@ -39,9 +40,11 @@ export function calculateColumnWidths(
 				case "Target":
 					contentLength = item.taget.length;
 					break;
-				case "Review":
-					contentLength = item.review.myStatus.kind.length;
+				case "Review": {
+					const status = getReviewStatusConfig(item.review.myStatus);
+					contentLength = String(status.text + status.icon).length + 3;
 					break;
+				}
 			}
 
 			maxLength = Math.max(maxLength, contentLength);
