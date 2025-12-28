@@ -16,12 +16,10 @@ export function ReviewStatus({ hasActivity, statusKind }: ReviewStatusProps) {
 			{hasActivity && (
 				<box flexDirection="row" gap={1}>
 					<text fg={theme.success}></text>
-					<text marginLeft={1} fg={theme[config.color as keyof typeof theme]}>
+					<text fg={theme[config.color as keyof typeof theme]}>
 						{config.icon}
 					</text>
-					<text marginLeft={1} fg={theme.success}>
-						Reviewed
-					</text>
+					<text fg={theme.success}>Reviewed</text>
 				</box>
 			)}
 			{!hasActivity && (
