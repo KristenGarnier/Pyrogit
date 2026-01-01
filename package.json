@@ -19,9 +19,11 @@
 		"@opentui/react": "^0.1.62",
 		"@types/react": "^19.2.7",
 		"clipboardy": "^5.0.2",
+		"dayjs": "^1.11.19",
 		"keytar": "^7.9.0",
 		"open": "^11.0.0",
 		"react": "^19.1.1",
+		"timeago.js": "^4.0.2",
 		"zustand": "^5.0.9"
 	}
 }
