@@ -37,14 +37,15 @@ export class ChangeRequestService implements ChangeRequestUseCase {
 			if (me) out = out.filter((x) => x.review.myStatus.kind === "needed");
 		}
 
-		switch (query.sort ?? "updated_desc") {
-			case "updated_asc":
-				out.sort((a, b) => a.updatedAt.getTime() - b.updatedAt.getTime());
-				break;
-			case "updated_desc":
-				out.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
-				break;
-		}
+		if (query.sort)
+			switch (query.sort ?? "updated_desc") {
+				case "updated_asc":
+					out.sort((a, b) => a.updatedAt.getTime() - b.updatedAt.getTime());
+					break;
+				case "updated_desc":
+					out.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+					break;
+			}
 
 		if (query.limit && query.limit > 0) out = out.slice(0, query.limit);
 		return out;
