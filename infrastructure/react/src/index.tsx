@@ -1,6 +1,6 @@
 import { createCliRenderer } from "@opentui/core";
-import { createRoot, useKeyboard } from "@opentui/react";
-import { useEffect } from "react";
+import { createRoot, useKeyboard, useRenderer } from "@opentui/react";
+import { useEffect, useState } from "react";
 import type { ChangeRequestService } from "../../../application/usecases/change-request.service";
 import { TokenInput } from "./components/molecules/token-input";
 import { HelpModal } from "./components/molecules/help-modal";
@@ -24,12 +24,16 @@ function App() {
 	const toast = useToastActions();
 	const userStore = useUserStore();
 
-	// const renderer = useRenderer();
-	//
+	//const renderer = useRenderer();
+	const [instanceCRService, setCRServiceInstance] = useState<
+		ChangeRequestService | undefined
+	>();
+
 	// useEffect(() => {
 	// 	renderer.console.show();
 	// }, [renderer.console.show]);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: I do not need those dependencies
 	useEffect(() => {
 		async function run() {
 			loadingStore.start("Loading the app");
@@ -59,8 +63,19 @@ function App() {
 			tabFocusStore.cycle();
 		}
 
-		if (key.name === "?") {
+		if (isAction(key.name, "help")) {
 			tabFocusStore.focusCustom("help");
+		}
+
+		if (isAction(key.name, "refresh")) {
+			if (!instanceCRService)
+				return toast.warning(
+					"Instance not yet initialized, retry in few seconds",
+				);
+
+			loadingStore.start("Updating prs");
+			toast.info("Fetching updated prs");
+			launch(instanceCRService);
 		}
 	});
 
@@ -93,6 +108,7 @@ function App() {
 			userStore.set(user);
 			toast.success("User loaded successfully");
 		} finally {
+			if (!instanceCRService) setCRServiceInstance(instance);
 			loadingStore.stop();
 		}
 	}
