@@ -1,4 +1,4 @@
-import { useKeyboard } from "@opentui/react";
+import { useKeyboard, useTerminalDimensions } from "@opentui/react";
 import { useChangeRequestFocusStore } from "../../stores/change-request.focus.store";
 import { useChangeRequestStore } from "../../stores/changeRequest.store";
 import { Tabs, useTabFocus } from "../../stores/tab.focus.store";
@@ -11,17 +11,21 @@ import {
 } from "../../utils/key-mapper";
 import { PullRequestItem } from "../molecules/pull-request-item";
 import { PullRequestTableHeader } from "../molecules/pull-request-table-header";
-import { throttle } from "../../utils/throttle";
 import open from "open";
 import { useToastActions } from "../../stores/toast.store";
 import clipboard from "clipboardy";
+import { useEffect, useRef } from "react";
+import type { ScrollBoxRenderable } from "@opentui/core";
 
 export function PullRequestManager() {
+	const scrollRef = useRef<ScrollBoxRenderable>(null);
 	const pullRequestStore = useChangeRequestStore();
 	const tabFocusStore = useTabFocus();
 	const itemFocusStore = useChangeRequestFocusStore();
 	const toastActions = useToastActions();
 	const prs = pullRequestStore.getPRs();
+
+	const { height } = useTerminalDimensions();
 
 	useKeyboard((key) => {
 		if (tabFocusStore.current !== Tabs.PULL_REQUESTS) return;
@@ -55,10 +59,31 @@ export function PullRequestManager() {
 		}
 	});
 
+	useEffect(() => {
+		if (
+			!scrollRef.current ||
+			(!itemFocusStore.current?.index && itemFocusStore.current?.index !== 0)
+		)
+			return;
+
+		const lowBound = Math.floor((height - 4) / 2);
+		const highBound = prss.length - lowBound;
+		const totalHeight = prs.length;
+		const scrollPos = itemFocusStore.current.index;
+
+		if (scrollPos < lowBound) return scrollRef.current.scrollTo(0);
+		if (scrollPos > highBound) return scrollRef.current.scrollTo(totalHeight);
+
+		if (Math.floor((height - 4) / 2) < itemFocusStore.current.index)
+			scrollRef.current.scrollTo(
+				itemFocusStore.current?.index - Math.floor((height - 4) / 2),
+			);
+	}, [itemFocusStore.current?.index, height]);
+
 	const widths = calculateColumnWidths(prs);
 
 	return (
-		<scrollbox
+		<box
 			title="Pull requests"
 			flexGrow={1}
 			borderStyle="rounded"
@@ -69,14 +94,16 @@ export function PullRequestManager() {
 			}
 		>
 			<PullRequestTableHeader widths={widths} />
-			{prs.map((item) => (
-				<PullRequestItem
-					key={item.id.number}
-					item={item}
-					selected={itemFocusStore.current?.data.id.number === item.id.number}
-					widths={widths}
-				/>
-			))}
-		</scrollbox>
+			<scrollbox ref={scrollRef}>
+				{prs.map((item) => (
+					<PullRequestItem
+						key={item.id.number}
+						item={item}
+						selected={itemFocusStore.current?.data.id.number === item.id.number}
+						widths={widths}
+					/>
+				))}
+			</scrollbox>
+		</box>
 	);
 }
