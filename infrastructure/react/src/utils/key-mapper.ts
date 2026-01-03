@@ -21,6 +21,7 @@ export const keyDefintion = {
 	refresh: ["r"],
 	tab: ["tab"],
 	help: ["?"],
+	search: ["/"],
 };
 
 export type SupportedActions = keyof typeof keyDefintion;

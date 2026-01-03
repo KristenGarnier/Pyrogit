@@ -15,6 +15,7 @@ interface ChangeRequestStore {
 
 	loading: boolean;
 	error: string | null;
+	filter: string;
 
 	setPRs(prs: ChangeRequest[]): void;
 	upsertPR(pr: ChangeRequest): void;
@@ -23,7 +24,7 @@ interface ChangeRequestStore {
 	setLoading(loading: boolean): void;
 	setError(error: string | null): void;
 
-	getPRs(): ChangeRequest[];
+	setFilter(filter: string): void;
 }
 
 export const useChangeRequestStore = create<ChangeRequestStore>()(
@@ -32,6 +33,7 @@ export const useChangeRequestStore = create<ChangeRequestStore>()(
 			prs: [],
 			loading: false,
 			error: null,
+			filter: "",
 
 			setPRs: (prs) => set({ prs }),
 
@@ -52,13 +54,7 @@ export const useChangeRequestStore = create<ChangeRequestStore>()(
 
 			setError: (error) => set({ error }),
 
-			getPRs: () => {
-				const { prs } = get();
-
-				return prs.filter((_pr) => {
-					return true;
-				});
-			},
+			setFilter: (filter) => set({ filter }),
 		}),
 		{
 			name: "pr-persistor",

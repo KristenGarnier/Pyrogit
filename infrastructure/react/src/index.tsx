@@ -1,9 +1,10 @@
 import { createCliRenderer } from "@opentui/core";
-import { createRoot, useKeyboard, useRenderer } from "@opentui/react";
+import { createRoot, useKeyboard } from "@opentui/react";
 import { useEffect, useState } from "react";
 import type { ChangeRequestService } from "../../../application/usecases/change-request.service";
-import { TokenInput } from "./components/molecules/token-input";
 import { HelpModal } from "./components/molecules/help-modal";
+import { ThemeChooser } from "./components/molecules/theme-chooser";
+import { TokenInput } from "./components/molecules/token-input";
 import { Layout } from "./components/organisms/layout";
 import { PullRequestManager } from "./components/organisms/pull-request-manager";
 import { Pyrogit } from "./services/pyrogit";
@@ -11,9 +12,8 @@ import { useChangeRequestStore } from "./stores/changeRequest.store";
 import { useLoadingStore } from "./stores/loading";
 import { useTabFocus } from "./stores/tab.focus.store";
 import { useToastActions } from "./stores/toast.store";
-import { isAction } from "./utils/key-mapper";
-import { ThemeChooser } from "./components/molecules/theme-chooser";
 import { useUserStore } from "./stores/user.store";
+import { isAction } from "./utils/key-mapper";
 
 const Pyro = new Pyrogit();
 
@@ -33,7 +33,7 @@ function App() {
 	// 	renderer.console.show();
 	// }, [renderer.console.show]);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: I do not need those dependencies
+	// biome-ignore lint/correctness/useExhaustiveDependencies: I do not need launch dependency it changes every render
 	useEffect(() => {
 		async function run() {
 			loadingStore.start("Loading the app");
@@ -59,6 +59,8 @@ function App() {
 	]);
 
 	useKeyboard((key) => {
+		if (tabFocusStore.disabled) return;
+
 		if (isAction(key.name, "tab")) {
 			tabFocusStore.cycle();
 		}
