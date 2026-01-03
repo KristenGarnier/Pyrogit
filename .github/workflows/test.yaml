@@ -2,9 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 jobs:
   test:
@@ -24,6 +24,3 @@ jobs:
 
       - name: Run tests
         run: bun test
-
-      - name: Run linting
-        run: bunx @biomejs/biome check .

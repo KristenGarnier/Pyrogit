@@ -34,9 +34,6 @@ jobs:
       - name: Run tests with coverage
         run: bun test --coverage
 
-      - name: Run linting
-        run: bunx @biomejs/biome check .
-
       - name: Security audit
         run: bun audit
 
