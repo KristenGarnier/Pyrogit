@@ -1,10 +1,10 @@
 import { createCliRenderer } from "@opentui/core";
-import { createRoot, useKeyboard } from "@opentui/react";
+import { createRoot, useKeyboard, useRenderer } from "@opentui/react";
 import { useEffect, useState } from "react";
 import type { ChangeRequestService } from "../../../application/usecases/change-request.service";
 import { HelpModal } from "./components/molecules/help-modal";
 import { ThemeChooser } from "./components/molecules/theme-chooser";
-import { TokenInput } from "./components/molecules/token-input";
+import { GhLogin } from "./components/molecules/gh-login";
 import { Layout } from "./components/organisms/layout";
 import { PullRequestManager } from "./components/organisms/pull-request-manager";
 import { Pyrogit } from "./services/pyrogit";
@@ -24,14 +24,14 @@ function App() {
 	const toast = useToastActions();
 	const userStore = useUserStore();
 
-	//const renderer = useRenderer();
+	const renderer = useRenderer();
 	const [instanceCRService, setCRServiceInstance] = useState<
 		ChangeRequestService | undefined
 	>();
 
-	// useEffect(() => {
-	// 	renderer.console.show();
-	// }, [renderer.console.show]);
+	useEffect(() => {
+		renderer.console.show();
+	}, [renderer.console.show]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: I do not need launch dependency it changes every render
 	useEffect(() => {
@@ -39,8 +39,8 @@ function App() {
 			loadingStore.start("Loading the app");
 			const [error, instance] = await Pyro.init();
 			if (error) {
-				if (error.message === "No token available") {
-					tabFocusStore.focusCustom("ask-token");
+				if (error.message.includes("No stored OAuth token")) {
+					tabFocusStore.focusCustom("ask-login");
 				} else {
 					toast.error("Failed to initialize app");
 				}
@@ -122,8 +122,8 @@ function App() {
 					<PullRequestManager />
 				</box>
 			</box>
-			{tabFocusStore.current === "ask-token" && (
-				<TokenInput onSuccess={handleTokenSuccess} />
+			{tabFocusStore.current === "ask-login" && (
+				<GhLogin onSuccess={handleTokenSuccess} />
 			)}
 			{tabFocusStore.current === "choose-theme" && <ThemeChooser />}
 			{tabFocusStore.current === "help" && <HelpModal />}

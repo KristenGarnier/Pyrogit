@@ -6,27 +6,26 @@ import { useToastActions } from "../../stores/toast.store";
 import type { ChangeRequestService } from "../../../../../application/usecases/change-request.service";
 import { Modal } from "./modal";
 
-type TokenInputProps = {
+type GhLoginProps = {
 	onSuccess: (instance: ChangeRequestService) => void;
 };
 
-export function TokenInput({ onSuccess }: TokenInputProps) {
+export function GhLogin({ onSuccess }: GhLoginProps) {
 	const { theme } = useTheme();
 	const toast = useToastActions();
-	const [value, setValue] = useState("");
 	const [loading, setLoading] = useState(false);
 
-	async function submitToken() {
+	async function login() {
 		setLoading(true);
 		const pyro = new Pyrogit();
-		const [error, instance] = await pyro.init(value);
-		if (error) {
+		const [initError, instance] = await pyro.init();
+		if (initError) {
 			setLoading(false);
-			toast.error(error.message);
+			toast.error(initError.message);
 			return;
 		}
 
-		toast.success("Token initialisation success");
+		toast.success("Login successful");
 		setLoading(false);
 		onSuccess(instance as ChangeRequestService);
 	}
@@ -34,27 +33,32 @@ export function TokenInput({ onSuccess }: TokenInputProps) {
 	return (
 		<Modal>
 			<Modal.Header
-				title="GitHub Token Required"
+				title="GitHub Login Required"
 				icon="🔐"
-				description="Please enter your GitHub personal access token to continue."
+				description="Please authenticate with GitHub CLI first."
 			/>
 
 			<Modal.Content>
-				<input
-					placeholder="Enter token..."
-					value={value}
-					onInput={setValue}
-					onSubmit={submitToken}
-					onPaste={(event) => setValue(event.text)}
-					focused
-				/>
+				<text>Run the following command in another terminal:</text>
+				<text fg={theme.primary} attributes={TextAttributes.BOLD}>
+					gh auth login
+				</text>
+				<text>Then click "Continue" below.</text>
+			</Modal.Content>
+
+			<Modal.Content>
+				<box flexDirection="row" gap={1}>
+					<button type="button" onClick={login} disabled={loading}>
+						{loading ? "Checking..." : "Continue"}
+					</button>
+				</box>
 			</Modal.Content>
 
 			<Modal.Content>
 				<box flexDirection="row" gap={1}>
 					{loading && (
 						<text fg={theme.info} attributes={TextAttributes.DIM}>
-							Verifying token...
+							Authenticating...
 						</text>
 					)}
 				</box>
