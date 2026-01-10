@@ -34,7 +34,7 @@ export function computeMyStatus(
 	meLogin: string | undefined,
 ): MyReviewStatus {
 	if (myLatest) {
-		return { kind: "as_author", decision: myLatest };
+		return { kind: "done", decision: myLatest };
 	}
 	if (
 		meLogin &&
