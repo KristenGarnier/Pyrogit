@@ -4,18 +4,18 @@ import { GHTokenRetrievalError } from "../errors/GHTokenRetrievalError";
 
 export class GhAuthService {
 	async getValidToken(): Promise<Result<string, GHTokenRetrievalError>> {
-		const token = await this.getTokenFromGh();
-		if (token.isOk()) {
-			return ok(token.value);
-		}
-		return err(
-			new GHTokenRetrievalError(
-				"No GitHub token found. Please run 'gh auth login'.",
-			),
+		return this.getToken().mapErr(
+			(error) =>
+				new GHTokenRetrievalError(
+					"No GitHub token found. Please run 'gh auth login'.",
+					{
+						cause: error,
+					},
+				),
 		);
 	}
 
-	private async getTokenFromGh(): Promise<Result<string, Error>> {
+	private getToken(): Result<string, Error> {
 		try {
 			const token = execSync("gh auth token", { encoding: "utf8" }).trim();
 			return ok(token);
