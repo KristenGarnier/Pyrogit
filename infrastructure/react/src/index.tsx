@@ -32,7 +32,9 @@ function App() {
 
 	const renderer = useRenderer();
 	useEffect(() => {
-		renderer.console.show();
+		if (process.env.NODE_ENV === "development") {
+			renderer.console.show();
+		}
 	}, [renderer.console.show]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: I do not need launch dependency it changes every render
