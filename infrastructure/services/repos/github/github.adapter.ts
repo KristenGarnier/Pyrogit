@@ -1,4 +1,4 @@
-import type { Octokit } from "@octokit/rest";
+import type { Octokit, RestEndpointMethodTypes } from "@octokit/rest";
 import type {
 	ChangeRequestRepository,
 	RepoRef,
@@ -9,6 +9,22 @@ import type {
 	UserRef,
 } from "../../../../domain/change-request";
 import type { ChangeRequestQuery } from "../../../../domain/change-request-query";
+import {
+	computeOverallStatus,
+	computeMyStatus,
+	pickMyLatestDecision,
+} from "./github.adapter.utils";
+import { type Result, ok, err, ResultAsync } from "neverthrow";
+import { GHPullListError } from "../../../errors/GHPullListError";
+import { GHPullReviewsError } from "../../../errors/GHPullReviewsError";
+import { GHPullError } from "../../../errors/GHPullError";
+import { NoUserError } from "../../../errors/NoUserError";
+
+type GitHubPR =
+	| RestEndpointMethodTypes["pulls"]["list"]["response"]["data"][0]
+	| RestEndpointMethodTypes["pulls"]["get"]["response"]["data"];
+type Reviews =
+	RestEndpointMethodTypes["pulls"]["listReviews"]["response"]["data"];
 
 export class GitHubChangeRequestRepository implements ChangeRequestRepository {
 	constructor(
@@ -19,108 +35,191 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
 	async list(
 		repo: RepoRef,
 		_query: ChangeRequestQuery,
-	): Promise<ChangeRequest[]> {
+	): Promise<
+		Result<ChangeRequest[], Error | GHPullListError | GHPullReviewsError>
+	> {
 		const me = await this.meProvider();
+		if (!me) return err(new NoUserError("User could not be found"));
 
-		const prs = await this.octokit.pulls.list({
+		const config = {
 			owner: repo.owner,
 			repo: repo.repo,
+		};
+
+		const result = await this.getPullsList({
+			...config,
 			state: "open",
 			per_page: 100,
-		});
-
-		const out = Promise.all(
-			prs.data.map(async (pr) => {
-				const reviews = await this.octokit.pulls.listReviews({
-					owner: repo.owner,
-					repo: repo.repo,
-					pull_number: pr.number,
-					per_page: 10,
-				});
-				return mapGitHubPR(repo, me, pr, reviews.data);
+		}).andThen(({ data: prs }) =>
+			this.getReviewsList({
+				config: { ...config },
+				prs,
+				repo,
+				me,
 			}),
 		);
 
-		return out ?? [];
+		if (result.isErr()) return err(result.error);
+		return ok(result.value);
 	}
 
-	async getById(id: ChangeRequestId): Promise<ChangeRequest> {
+	async getById(
+		id: ChangeRequestId,
+	): Promise<Result<ChangeRequest, Error | GHPullError | GHPullReviewsError>> {
 		const me = await this.meProvider();
+		if (!me) return err(new NoUserError("could not be found"));
 
-		const pr = await this.octokit.pulls.get({
+		const result = await this.getPull({
 			owner: id.owner,
 			repo: id.repo,
 			pull_number: id.number,
+		}).andThen((response) => {
+			return this.getReviews({
+				config: {
+					owner: id.owner,
+					repo: id.repo,
+				},
+				pr: response.data,
+			}).map((reviews) => {
+				return this.mapGitHubPR(id, me, response.data, reviews.data);
+			});
 		});
 
-		const reviews = await this.octokit.pulls.listReviews({
-			owner: id.owner,
-			repo: id.repo,
-			pull_number: id.number,
-			per_page: 100,
-		});
+		if (result.isErr()) return err(result.error);
+		return ok(result.value);
+	}
 
-		return mapGitHubPR(
-			{ owner: id.owner, repo: id.repo },
-			me,
-			pr.data,
-			reviews.data,
+	private getPullsList(
+		config: RestEndpointMethodTypes["pulls"]["list"]["parameters"],
+	) {
+		return ResultAsync.fromPromise(
+			this.octokit.pulls.list(config),
+			(error) =>
+				new GHPullListError("Could not retrieve pulls from gh api", {
+					cause: error,
+				}),
 		);
 	}
-}
 
-function mapGitHubPR(
-	repo: RepoRef,
-	me: UserRef | null,
-	pr: any,
-	reviews: any[],
-): ChangeRequest {
-	const requested = (pr.requested_reviewers ?? []).map((u: any) =>
-		String(u.login).toLowerCase(),
-	);
-	const meLogin = me?.login?.toLowerCase();
+	private getPull(
+		config: RestEndpointMethodTypes["pulls"]["get"]["parameters"],
+	) {
+		return ResultAsync.fromPromise(
+			this.octokit.pulls.get(config),
+			(error) =>
+				new GHPullError("Could not retrieve pull from gh api", {
+					cause: error,
+				}),
+		);
+	}
 
-	const myLatest = meLogin ? pickMyLatestDecision(meLogin, reviews) : undefined;
+	private getReviews({
+		pr,
+		config,
+	}: {
+		pr: GitHubPR;
+		config: Pick<
+			RestEndpointMethodTypes["pulls"]["listReviews"]["parameters"],
+			"owner" | "repo"
+		>;
+	}) {
+		return ResultAsync.fromPromise(
+			this.octokit.pulls.listReviews({
+				...config,
+				pull_number: pr.number,
+				per_page: 100,
+			}),
+			(error) =>
+				new GHPullReviewsError(
+					"One or more review list request failed from gh api",
+					{
+						cause: error,
+					},
+				),
+		);
+	}
 
-	const myStatus: ChangeRequest["review"]["myStatus"] = myLatest
-		? { kind: "done", decision: myLatest }
-		: meLogin && requested.includes(meLogin)
-			? { kind: "needed" }
-			: meLogin
-				? { kind: "not_needed" }
-				: { kind: "unknown" };
+	private getReviewsList({
+		prs,
+		config,
+		repo,
+		me,
+	}: {
+		prs: GitHubPR[];
+		config: Pick<
+			RestEndpointMethodTypes["pulls"]["listReviews"]["parameters"],
+			"owner" | "repo"
+		>;
+		repo: RepoRef;
+		me: UserRef;
+	}) {
+		return ResultAsync.fromPromise(
+			Promise.all(
+				prs.map(async (pr) => {
+					const reviews = await this.getReviews({
+						pr,
+						config,
+					});
+					if (reviews.isErr()) throw reviews.error;
+					return this.mapGitHubPR(repo, me, pr, reviews.value.data);
+				}),
+			),
+			(error) => error as GHPullReviewsError,
+		);
+	}
 
-	return {
-		id: { owner: repo.owner, repo: repo.repo, number: pr.number },
-		title: pr.title,
-		author: { login: pr.user.login },
-		taget: pr.base.ref,
-		branch: pr.head.ref,
-		state: pr.merged_at ? "merged" : pr.state === "closed" ? "closed" : "open",
-		isDraft: Boolean(pr.draft),
-		updatedAt: new Date(pr.updated_at),
-		webUrl: pr.html_url,
-		review: {
-			hasAnyReviewActivity: reviews.length > 0,
-			myStatus,
-		},
-	};
-}
+	private mapGitHubPR(
+		repo: RepoRef,
+		me: UserRef | null,
+		pr: GitHubPR,
+		reviews: Reviews,
+	): ChangeRequest {
+		const requested = (pr.requested_reviewers ?? []).map((u) =>
+			String(u.login).toLowerCase(),
+		);
+		const meLogin = me?.login?.toLowerCase();
+		const myLatest = meLogin
+			? pickMyLatestDecision(meLogin, reviews)
+			: undefined;
+		const isMyPR = Boolean(
+			meLogin && pr.user && meLogin === pr.user.login.toLowerCase(),
+		);
 
-function pickMyLatestDecision(meLogin: string, reviews: any[]) {
-	const mine = reviews
-		.filter((r) => String(r.user?.login ?? "").toLowerCase() === meLogin)
-		.filter((r) => r.state !== "DISMISSED" && r.state !== "PENDING");
+		const activeReviews = reviews.filter((r) => r.state !== "DISMISSED");
+		const overallStatus = computeOverallStatus(activeReviews, requested);
+		const hasComments = Boolean(reviews.some((r) => r.state === "COMMENTED"));
+		const hasAnyReviewActivity: boolean =
+			overallStatus !== "none" || hasComments;
 
-	mine.sort(
-		(a, b) =>
-			new Date(b.submitted_at ?? 0).getTime() -
-			new Date(a.submitted_at ?? 0).getTime(),
-	);
+		const myStatus = computeMyStatus(
+			myLatest,
+			isMyPR,
+			requested,
+			overallStatus,
+			meLogin,
+		);
 
-	const s = mine[0]?.state;
-	if (s === "APPROVED") return "approved" as const;
-	if (s === "CHANGES_REQUESTED") return "changes_requested" as const;
-	if (s === "COMMENTED") return "commented" as const;
-	return undefined;
+		return {
+			id: { owner: repo.owner, repo: repo.repo, number: pr.number },
+			title: pr.title,
+			author: pr.user ? { login: pr.user.login } : { login: "unknown" },
+			taget: pr.base.ref,
+			branch: pr.head.ref,
+			state: pr.merged_at
+				? "merged"
+				: pr.state === "closed"
+					? "closed"
+					: "open",
+			isDraft: Boolean(pr.draft),
+			updatedAt: new Date(pr.updated_at),
+			webUrl: pr.html_url,
+			review: {
+				hasAnyReviewActivity,
+				myStatus,
+				overallStatus,
+				hasComments,
+				isMyPR,
+			},
+		};
+	}
 }

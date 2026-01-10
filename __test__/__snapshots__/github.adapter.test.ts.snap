@@ -1,0 +1,61 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`GitHubChangeRequestRepository list should return change requests for open PRs 1`] = `
+{
+  "author": {
+    "login": "author",
+  },
+  "branch": "feature",
+  "id": {
+    "number": 1,
+    "owner": "test",
+    "repo": "repo",
+  },
+  "isDraft": false,
+  "review": {
+    "hasAnyReviewActivity": true,
+    "hasComments": true,
+    "isMyPR": false,
+    "myStatus": {
+      "decision": "commented",
+      "kind": "done",
+    },
+    "overallStatus": "approved",
+  },
+  "state": "open",
+  "taget": "main",
+  "title": "Test PR",
+  "updatedAt": 2023-01-01T00:00:00.000Z,
+  "webUrl": "https://github.com/test/repo/pull/1",
+}
+`;
+
+exports[`GitHubChangeRequestRepository getById should return change request by ID 1`] = `
+{
+  "author": {
+    "login": "author",
+  },
+  "branch": "feature",
+  "id": {
+    "number": 1,
+    "owner": "test",
+    "repo": "repo",
+  },
+  "isDraft": false,
+  "review": {
+    "hasAnyReviewActivity": true,
+    "hasComments": true,
+    "isMyPR": false,
+    "myStatus": {
+      "decision": "commented",
+      "kind": "done",
+    },
+    "overallStatus": "approved",
+  },
+  "state": "open",
+  "taget": "main",
+  "title": "Test PR",
+  "updatedAt": 2023-01-01T00:00:00.000Z,
+  "webUrl": "https://github.com/test/repo/pull/1",
+}
+`;

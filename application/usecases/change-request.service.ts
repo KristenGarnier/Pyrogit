@@ -21,7 +21,9 @@ export class ChangeRequestService implements ChangeRequestUseCase {
 		const repo = await this.deps.repoResolver.resolveCurrentRepo();
 		const me = await this.deps.currentUserProvider.getCurrentUser();
 
-		const items = await this.deps.repository.list(repo, query);
+		const itemsResult = await this.deps.repository.list(repo, query);
+		if (itemsResult.isErr()) throw itemsResult.error;
+		const items = itemsResult.value;
 
 		// Filtres/tri métier (un minimum)
 		let out = items.slice();
@@ -52,7 +54,9 @@ export class ChangeRequestService implements ChangeRequestUseCase {
 	}
 
 	async getById(id: ChangeRequestId): Promise<ChangeRequest> {
-		return this.deps.repository.getById(id);
+		const result = await this.deps.repository.getById(id);
+		if (result.isErr()) throw result.error;
+		return result.value;
 	}
 
 	async checkAuth(): Promise<boolean> {
