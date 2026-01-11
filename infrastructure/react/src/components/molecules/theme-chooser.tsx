@@ -4,12 +4,12 @@ import { useScopedStore } from "../../hooks/use-scoped-store";
 import { useTheme } from "../../hooks/use-theme";
 import { useTabFocus } from "../../stores/tab.focus.store";
 import { type KeyThemeMap, useThemeStore } from "../../stores/theme.store";
+import { useToastActions } from "../../stores/toast.store";
 import {
 	isAction,
 	matchKey,
 	type YDirectionsActions,
 } from "../../utils/key-mapper";
-import { useToastActions } from "../../stores/toast.store";
 import { Modal } from "./modal";
 
 export function ThemeChooser() {

@@ -1,9 +1,9 @@
+import type { Result } from "neverthrow";
 import type {
 	ChangeRequest,
 	ChangeRequestId,
 } from "../../domain/change-request";
 import type { ChangeRequestQuery } from "../../domain/change-request-query";
-import type { Result } from "neverthrow";
 
 export type RepoRef = { owner: string; repo: string };
 

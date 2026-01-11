@@ -1,7 +1,7 @@
 import type { RestEndpointMethodTypes } from "@octokit/rest";
 import type {
-	OverallStatus,
 	MyReviewStatus,
+	OverallStatus,
 } from "../../../../domain/change-request";
 
 type Reviews =

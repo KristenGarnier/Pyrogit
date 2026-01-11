@@ -1,7 +1,15 @@
+import type { ScrollBoxRenderable } from "@opentui/core";
 import { useKeyboard, useTerminalDimensions } from "@opentui/react";
+import clipboard from "clipboardy";
+import open from "open";
+import { useMemo, useRef, useState } from "react";
+import { useAutoScroll } from "../../hooks/use-auto-scroll";
+import { useFuseSearch } from "../../hooks/use-fuse-search";
+import { useTheme } from "../../hooks/use-theme";
 import { useChangeRequestFocusStore } from "../../stores/change-request.focus.store";
 import { useChangeRequestStore } from "../../stores/changeRequest.store";
 import { Tabs, useTabFocus } from "../../stores/tab.focus.store";
+import { useToastActions } from "../../stores/toast.store";
 import { calculateColumnWidths } from "../../utils/column-width-calculator";
 import {
 	isAction,
@@ -10,14 +18,6 @@ import {
 } from "../../utils/key-mapper";
 import { PullRequestItem } from "../molecules/pull-request-item";
 import { PullRequestTableHeader } from "../molecules/pull-request-table-header";
-import { useAutoScroll } from "../../hooks/use-auto-scroll";
-import open from "open";
-import { useToastActions } from "../../stores/toast.store";
-import clipboard from "clipboardy";
-import { useMemo, useRef, useState } from "react";
-import type { ScrollBoxRenderable } from "@opentui/core";
-import { useTheme } from "../../hooks/use-theme";
-import { useFuseSearch } from "../../hooks/use-fuse-search";
 
 export function PullRequestManager() {
 	const scrollRef = useRef<ScrollBoxRenderable>(null);

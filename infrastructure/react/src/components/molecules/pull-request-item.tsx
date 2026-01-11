@@ -1,24 +1,24 @@
 import clipboard from "clipboardy";
+import dayjs from "dayjs";
 import open from "open";
+import { format } from "timeago.js";
 import type { ChangeRequest } from "../../../../../domain/change-request";
 import { useTheme } from "../../hooks/use-theme";
 import { useTabFocus } from "../../stores/tab.focus.store";
 import { useToastActions } from "../../stores/toast.store";
+import { useUserStore } from "../../stores/user.store";
+import { getAuthorColor } from "../../utils/author-color.utils";
 import type { ColumnKey } from "../../utils/column-width-calculator";
 import { truncateText } from "../../utils/column-width-calculator";
-import { throttle } from "../../utils/throttle";
+import { isRecent } from "../../utils/date.utils";
 import {
 	getReviewStatusConfig,
 	getReviewStatusConfigMe,
 } from "../../utils/review-status.utils";
+import { throttle } from "../../utils/throttle";
 import { StatusIcon } from "../atoms/status-icon";
 import { ContextMenu, type ContextMenuOption } from "./context-menu";
 import { ReviewStatus } from "./review-status";
-import { useUserStore } from "../../stores/user.store";
-import { getAuthorColor } from "../../utils/author-color.utils";
-import { format } from "timeago.js";
-import dayjs from "dayjs";
-import { isRecent } from "../../utils/date.utils";
 
 interface PullRequestItemProps {
 	item: ChangeRequest;

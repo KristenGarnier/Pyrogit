@@ -1,8 +1,8 @@
+import { err, ok, type Result } from "neverthrow";
 import type { ChangeRequestService } from "../../../../application/usecases/change-request.service";
 import { init } from "../../../app/app";
 import type { GHTokenRetrievalError } from "../../../errors/GHTokenRetrievalError";
 import { GhAuthService } from "../../../services/ghauth.service";
-import { Result, ok, err } from "neverthrow";
 
 export class Pyrogit {
 	private _pyro: ChangeRequestService | null = null;

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useThemeStore } from "../../stores/theme.store";
-import { ToastContainer } from "../molecules/toast-container";
 import { AppFooter } from "../molecules/app-footer";
+import { ToastContainer } from "../molecules/toast-container";
 
 type LayoutProps = {
 	children: ReactNode;

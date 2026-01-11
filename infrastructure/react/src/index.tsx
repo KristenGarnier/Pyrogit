@@ -2,9 +2,11 @@ import { createCliRenderer } from "@opentui/core";
 import { createRoot, useKeyboard, useRenderer } from "@opentui/react";
 import { useEffect, useState } from "react";
 import type { ChangeRequestService } from "../../../application/usecases/change-request.service";
+import { GH_TOKEN_ERROR } from "../../errors/GHTokenRetrievalError";
+import { isTaggedError } from "../../errors/TaggedError";
+import { GhLogin } from "./components/molecules/gh-login";
 import { HelpModal } from "./components/molecules/help-modal";
 import { ThemeChooser } from "./components/molecules/theme-chooser";
-import { GhLogin } from "./components/molecules/gh-login";
 import { Layout } from "./components/organisms/layout";
 import { PullRequestManager } from "./components/organisms/pull-request-manager";
 import { Pyrogit } from "./services/pyrogit";
@@ -14,8 +16,6 @@ import { useTabFocus } from "./stores/tab.focus.store";
 import { useToastActions } from "./stores/toast.store";
 import { useUserStore } from "./stores/user.store";
 import { isAction } from "./utils/key-mapper";
-import { isTaggedError } from "../../errors/TaggedError";
-import { GH_TOKEN_ERROR } from "../../errors/GHTokenRetrievalError";
 
 const Pyro = new Pyrogit();
 

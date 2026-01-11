@@ -1,4 +1,4 @@
-import { Result } from "neverthrow";
+import type { Result } from "neverthrow";
 
 export interface Storage<T> {
 	read(): Promise<Result<T, Error>>;

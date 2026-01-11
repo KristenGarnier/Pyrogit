@@ -1,5 +1,5 @@
+import { err, ok, type Result } from "neverthrow";
 import type { Storage } from "../storage.interface";
-import { Result, ok, err } from "neverthrow";
 
 export class JSONParserStorage<U> implements Storage<U> {
 	constructor(private readonly storage: Storage<string>) {}

@@ -1,9 +1,9 @@
 import { TextAttributes } from "@opentui/core";
 import { useState } from "react";
+import type { ChangeRequestService } from "../../../../../application/usecases/change-request.service";
 import { useTheme } from "../../hooks/use-theme";
 import { Pyrogit } from "../../services/pyrogit";
 import { useToastActions } from "../../stores/toast.store";
-import type { ChangeRequestService } from "../../../../../application/usecases/change-request.service";
 import { Modal } from "./modal";
 
 type GhLoginProps = {

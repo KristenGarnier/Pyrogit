@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
 import { useKeyboard } from "@opentui/react";
+import type { ReactNode } from "react";
 import { useTheme } from "../../hooks/use-theme";
 import { isAction } from "../../utils/key-mapper";
 

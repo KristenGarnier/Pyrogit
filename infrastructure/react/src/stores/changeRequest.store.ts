@@ -1,9 +1,9 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { ChangeRequest } from "../../../../domain/change-request";
+import { RootLocator } from "../../../services/locator/locators";
 import { createSimpleStorage } from "../utils/init-file-storage.utils";
 import { zustandFileStorage } from "../utils/zustand-file-storage.utils";
-import { RootLocator } from "../../../services/locator/locators";
 
 const projectPath = new RootLocator().findDir();
 const projectPathName = projectPath

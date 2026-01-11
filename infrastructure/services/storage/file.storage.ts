@@ -1,6 +1,6 @@
 import * as fs from "node:fs/promises";
+import { err, ok, type Result } from "neverthrow";
 import type { Storage } from "./storage.interface";
-import { Result, ok, err } from "neverthrow";
 
 export class FileStorage implements Storage<string> {
 	constructor(private readonly filePath: string) {}

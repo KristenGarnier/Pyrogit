@@ -1,4 +1,5 @@
 import type { Octokit, RestEndpointMethodTypes } from "@octokit/rest";
+import { err, ok, type Result, ResultAsync } from "neverthrow";
 import type {
 	ChangeRequestRepository,
 	RepoRef,
@@ -9,16 +10,15 @@ import type {
 	UserRef,
 } from "../../../../domain/change-request";
 import type { ChangeRequestQuery } from "../../../../domain/change-request-query";
-import {
-	computeOverallStatus,
-	computeMyStatus,
-	pickMyLatestDecision,
-} from "./github.adapter.utils";
-import { type Result, ok, err, ResultAsync } from "neverthrow";
+import { GHPullError } from "../../../errors/GHPullError";
 import { GHPullListError } from "../../../errors/GHPullListError";
 import { GHPullReviewsError } from "../../../errors/GHPullReviewsError";
-import { GHPullError } from "../../../errors/GHPullError";
 import { NoUserError } from "../../../errors/NoUserError";
+import {
+	computeMyStatus,
+	computeOverallStatus,
+	pickMyLatestDecision,
+} from "./github.adapter.utils";
 
 type GitHubPR =
 	| RestEndpointMethodTypes["pulls"]["list"]["response"]["data"][0]
