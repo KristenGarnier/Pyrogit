@@ -3,7 +3,7 @@
 	"module": "src/index.tsx",
 	"type": "module",
 	"private": true,
-	"version": "0.4.0-alpha",
+	"version": "0.4.1-alpha",
 	"scripts": {
 		"dev": "bun run --watch infrastructure/react/src/index.tsx"
 	},
