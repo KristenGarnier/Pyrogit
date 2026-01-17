@@ -82,14 +82,12 @@ function App() {
 
 			loadingStore.start("Updating prs");
 			toast.info("Fetching updated prs");
-			launch(instanceCRService, true);
+			launch(instanceCRService);
 		}
 	});
 
-	async function launch(instance: ChangeRequestService, force = false) {
+	async function launch(instance: ChangeRequestService) {
 		try {
-			if (prStore.prs.length > 0 && !force) return;
-
 			const requests = await instance.list({});
 			prStore.setPRs(requests);
 
