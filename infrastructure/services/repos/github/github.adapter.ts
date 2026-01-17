@@ -1,5 +1,8 @@
-import type { Octokit, RestEndpointMethodTypes } from "@octokit/rest";
+import { Octokit } from "@octokit/rest";
+import type { RestEndpointMethodTypes } from "@octokit/rest";
 import { err, ok, type Result, ResultAsync } from "neverthrow";
+import { Worker } from "node:worker_threads";
+import { cpus } from "node:os";
 import type {
 	ChangeRequestRepository,
 	RepoRef,
@@ -27,10 +30,21 @@ type Reviews =
 	RestEndpointMethodTypes["pulls"]["listReviews"]["response"]["data"];
 
 export class GitHubChangeRequestRepository implements ChangeRequestRepository {
+	private readonly octokit: Octokit;
+	private readonly token: string;
+
 	constructor(
-		private readonly octokit: Octokit,
+		token: string | Octokit,
 		private readonly meProvider: () => Promise<UserRef | null>,
-	) {}
+	) {
+		if (typeof token === "string") {
+			this.token = token;
+			this.octokit = new Octokit({ auth: token });
+		} else {
+			this.token = "mock";
+			this.octokit = token;
+		}
+	}
 
 	async list(
 		repo: RepoRef,
@@ -154,16 +168,40 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
 		me: UserRef;
 	}) {
 		return ResultAsync.fromPromise(
-			Promise.all(
-				prs.map(async (pr) => {
-					const reviews = await this.getReviews({
-						pr,
-						config,
-					});
-					if (reviews.isErr()) throw reviews.error;
-					return this.mapGitHubPR(repo, me, pr, reviews.value.data);
-				}),
-			),
+			(async () => {
+				const numWorkers = cpus().length;
+				const chunkSize = Math.ceil(prs.length / numWorkers);
+				const chunks: GitHubPR[][] = [];
+				for (let i = 0; i < prs.length; i += chunkSize) {
+					chunks.push(prs.slice(i, i + chunkSize));
+				}
+				const promises = chunks.map(
+					(chunk) =>
+						new Promise<ChangeRequest[]>((resolve, reject) => {
+							const worker = new Worker(
+								new URL("./github.worker.ts", import.meta.url),
+							);
+							worker.postMessage({
+								prs: chunk,
+								config,
+								repo,
+								me,
+								token: this.token,
+							});
+							worker.on("message", (msg) => {
+								if (msg.error) {
+									reject(msg.error);
+								} else {
+									resolve(msg.results);
+								}
+								worker.terminate();
+							});
+							worker.on("error", reject);
+						}),
+				);
+				const chunkResults = await Promise.all(promises);
+				return chunkResults.flat();
+			})(),
 			(error) => error as GHPullReviewsError,
 		);
 	}

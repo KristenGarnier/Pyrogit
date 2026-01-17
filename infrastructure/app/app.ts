@@ -17,7 +17,7 @@ export function init(token: string) {
 	const repoResolver = new GitRemoteRepoResolver({ remoteName: "origin" });
 	const currentUserProvider = new GitHubCurrentUserProvider(octokit);
 
-	const repository = new GitHubChangeRequestRepository(octokit, () =>
+	const repository = new GitHubChangeRequestRepository(token, () =>
 		currentUserProvider.getCurrentUser(),
 	);
 

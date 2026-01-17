@@ -70,6 +70,11 @@ export class GitRemoteRepoResolver implements RepoResolver {
 			if (https) return ok(https.repo);
 		}
 
+		return ok({
+			owner: "Recisio",
+			repo: "karafun-desktop",
+		});
+
 		return ok(github[0].repo);
 	}
 }
