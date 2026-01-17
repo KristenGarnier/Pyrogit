@@ -1,3 +1,4 @@
+import { setTimeout } from "node:timers/promises";
 import { create } from "zustand";
 
 export type ToastType = "info" | "success" | "warning" | "error";
@@ -38,9 +39,15 @@ export const useToastStore = create<ToastStoreState>((set, get) => ({
 		}));
 
 		// Auto-remove after duration
-		setTimeout(() => {
-			get().removeToast(id);
-		}, toast.duration);
+		setTimeout(
+			toast.duration,
+			() => {
+				get().removeToast(id);
+			},
+			{
+				ref: false,
+			},
+		);
 	},
 
 	removeToast: (id: string) => {
