@@ -18,10 +18,13 @@ export class ChangeRequestService implements ChangeRequestUseCase {
 	constructor(private readonly deps: Deps) {}
 
 	async list(query: ChangeRequestQuery): Promise<ChangeRequest[]> {
-		const repoResult = await this.deps.repoResolver.resolveCurrentRepo();
+		const [repoResult, me] = await Promise.all([
+			this.deps.repoResolver.resolveCurrentRepo(),
+			this.deps.currentUserProvider.getCurrentUser(),
+		]);
+
 		if (repoResult.isErr()) throw repoResult.error;
 		const repo = repoResult.value;
-		const me = await this.deps.currentUserProvider.getCurrentUser();
 
 		const itemsResult = await this.deps.repository.list(repo, query);
 		if (itemsResult.isErr()) throw itemsResult.error;
@@ -52,6 +55,7 @@ export class ChangeRequestService implements ChangeRequestUseCase {
 			}
 
 		if (query.limit && query.limit > 0) out = out.slice(0, query.limit);
+
 		return out;
 	}
 

@@ -1,35 +1,9 @@
 import { TextAttributes } from "@opentui/core";
-import { useState } from "react";
-import type { ChangeRequestService } from "../../../../../application/usecases/change-request.service";
 import { useTheme } from "../../hooks/use-theme";
-import { Pyrogit } from "../../services/pyrogit";
-import { useToastActions } from "../../stores/toast.store";
 import { Modal } from "./modal";
 
-type GhLoginProps = {
-	onSuccess: (instance: ChangeRequestService) => void;
-};
-
-export function GhLogin({ onSuccess }: GhLoginProps) {
+export function GhLogin() {
 	const { theme } = useTheme();
-	const toast = useToastActions();
-	const [loading, setLoading] = useState(false);
-
-	async function login() {
-		setLoading(true);
-		const pyro = new Pyrogit();
-		const initResult = await pyro.init();
-		if (initResult.isErr()) {
-			setLoading(false);
-			toast.error(initResult.error.message);
-			return;
-		}
-
-		const instance = initResult.value;
-		toast.success("Login successful");
-		setLoading(false);
-		onSuccess(instance as ChangeRequestService);
-	}
 
 	return (
 		<Modal>

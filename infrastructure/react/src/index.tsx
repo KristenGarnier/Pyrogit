@@ -29,13 +29,13 @@ function App() {
 	const [instanceCRService, setCRServiceInstance] = useState<
 		ChangeRequestService | undefined
 	>();
-
+	//
 	const renderer = useRenderer();
 	useEffect(() => {
 		if (process.env.CONSOLE_DISPLAY) renderer.console.show();
 	}, [renderer.console.show]);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: I do not need launch dependency it changes every render
+	// 	// biome-ignore lint/correctness/useExhaustiveDependencies: I do not need launch dependency it changes every render
 	useEffect(() => {
 		async function run() {
 			loadingStore.start("Loading the app");
@@ -53,7 +53,7 @@ function App() {
 			}
 
 			const instance = initResult.value;
-			await launch(instance);
+			launch(instance);
 		}
 		run().finally(loadingStore.stop);
 	}, [
@@ -82,19 +82,14 @@ function App() {
 
 			loadingStore.start("Updating prs");
 			toast.info("Fetching updated prs");
-			launch(instanceCRService);
+			launch(instanceCRService, true);
 		}
 	});
 
-	const handleTokenSuccess = (instance: ChangeRequestService) => {
-		(async () => {
-			tabFocusStore.stopCustom();
-			await launch(instance);
-		})();
-	};
-
-	async function launch(instance: ChangeRequestService) {
+	async function launch(instance: ChangeRequestService, force = false) {
 		try {
+			if (prStore.prs.length > 0 && !force) return;
+
 			const requests = await instance.list({});
 			prStore.setPRs(requests);
 
@@ -123,13 +118,9 @@ function App() {
 	return (
 		<Layout>
 			<box flexDirection="column">
-				<box flexDirection="row">
-					<PullRequestManager />
-				</box>
+				<box flexDirection="row">{<PullRequestManager />}</box>
 			</box>
-			{tabFocusStore.current === "ask-login" && (
-				<GhLogin onSuccess={handleTokenSuccess} />
-			)}
+			{tabFocusStore.current === "ask-login" && <GhLogin />}
 			{tabFocusStore.current === "choose-theme" && <ThemeChooser />}
 			{tabFocusStore.current === "help" && <HelpModal />}
 		</Layout>
