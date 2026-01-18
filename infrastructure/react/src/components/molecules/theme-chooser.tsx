@@ -81,6 +81,7 @@ export function ThemeChooser() {
 			<Modal.Content marginBottom={0}>
 				{themesAvailableWithCallback().map((item) => (
 					<box
+						key={item.name}
 						width={"100%"}
 						{...(itemFocusStore.current?.data.name === item.name && {
 							backgroundColor: theme.muted,
@@ -89,7 +90,6 @@ export function ThemeChooser() {
 						paddingLeft={1}
 						paddingRight={1}
 						gap={1}
-						key={item.name}
 					>
 						<text fg={theme.foreground}>{item.name}</text>
 					</box>

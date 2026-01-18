@@ -55,6 +55,7 @@ export function ContextMenu({ id, options }: ContextMenuProps) {
 		>
 			{options.map((item) => (
 				<box
+					key={item.id}
 					width={"100%"}
 					{...(itemFocusStore.current?.data.id === item.id &&
 						tabFocusStore.current === id && {
@@ -64,7 +65,6 @@ export function ContextMenu({ id, options }: ContextMenuProps) {
 					paddingLeft={1}
 					paddingRight={1}
 					gap={1}
-					key={item.id}
 				>
 					<text fg={theme.foreground}>{item.icon}</text>
 					<text fg={theme.foreground}>{item.title}</text>
