@@ -23,6 +23,7 @@ import {
 	computeOverallStatus,
 	pickMyLatestDecision,
 } from "./github.adapter.utils";
+import { data } from "happy-dom/lib/PropertySymbol";
 
 type GitHubPR =
 	| RestEndpointMethodTypes["pulls"]["list"]["response"]["data"][0]
@@ -232,47 +233,16 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
 		me: UserRef;
 	}) {
 		return ResultAsync.fromPromise(
-			(async () => {
-				const numWorkers = cpus().length;
-				const chunkSize = Math.ceil(prs.length / numWorkers);
-				const chunks: GitHubPR[][] = [];
-				for (let i = 0; i < prs.length; i += chunkSize) {
-					chunks.push(prs.slice(i, i + chunkSize));
-				}
-				const promises = chunks.map((chunk) =>
-					withAbort(
-						(signal) =>
-							new Promise<ChangeRequest[]>((resolve, reject) => {
-								const worker = new Worker(
-									new URL("./github.worker.ts", import.meta.url),
-								);
-								worker.postMessage({
-									prs: chunk,
-									config,
-									repo,
-									me,
-									token: this.token,
-								});
-								worker.onmessage = (msg) => {
-									if (msg.data.error) {
-										reject(msg.data.error);
-									} else {
-										resolve(msg.data.results);
-									}
-									worker.terminate();
-								};
-								worker.onerror = reject;
-
-								signal.addEventListener("abort", () => {
-									if (!worker) return;
-									worker.terminate();
-								});
-							}),
-					),
-				);
-				const chunkResults = await Promise.all(promises);
-				return chunkResults.flat();
-			})(),
+			Promise.all(
+				prs.map(async (pr) => {
+					const reviews = await this.getReviews({
+						pr,
+						config: config,
+					});
+					if (reviews.isErr()) throw reviews.error;
+					return this.mapGitHubPR(repo, me, pr, reviews.value.data);
+				}),
+			),
 			(error) => error as GHPullReviewsError,
 		);
 	}
