@@ -39,15 +39,11 @@ export const useToastStore = create<ToastStoreState>((set, get) => ({
 		}));
 
 		// Auto-remove after duration
-		setTimeout(
-			toast.duration,
-			() => {
-				get().removeToast(id);
-			},
-			{
-				ref: false,
-			},
-		);
+		setTimeout(toast.duration, id, {
+			ref: false,
+		}).then((toastId: string) => {
+			get().removeToast(toastId);
+		});
 	},
 
 	removeToast: (id: string) => {
