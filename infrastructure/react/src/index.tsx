@@ -16,6 +16,7 @@ import { useTabFocus } from "./stores/tab.focus.store";
 import { useToastActions } from "./stores/toast.store";
 import { useUserStore } from "./stores/user.store";
 import { isAction } from "./utils/key-mapper";
+import { abortAll } from "./utils/abort-request.utils";
 
 const Pyro = new Pyrogit();
 
@@ -131,3 +132,13 @@ function App() {
 
 const renderer = await createCliRenderer();
 createRoot(renderer).render(<App />);
+
+process.on("SIGINT", () => {
+	abortAll("SIGINT");
+	process.exit(0);
+});
+
+process.on("SIGTERM", () => {
+	abortAll("SIGTERM");
+	process.exit(0);
+});

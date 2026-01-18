@@ -23,6 +23,8 @@ import {
 	pickMyLatestDecision,
 } from "./github.adapter.utils";
 import { hasBeenUpdatedSince } from "../../../react/src/utils/date.utils";
+import { withAbort } from "../../../react/src/utils/abort-request.utils";
+import { signal } from "happy-dom/lib/PropertySymbol";
 
 type GitHubPR =
 	| RestEndpointMethodTypes["pulls"]["list"]["response"]["data"][0]
@@ -152,7 +154,14 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
 		config: RestEndpointMethodTypes["pulls"]["list"]["parameters"],
 	) {
 		return ResultAsync.fromPromise(
-			this.octokit.pulls.list(config),
+			withAbort((signal) =>
+				this.octokit.pulls.list({
+					...config,
+					request: {
+						signal,
+					},
+				}),
+			),
 			(error) =>
 				new GHPullListError("Could not retrieve pulls from gh api", {
 					cause: error,
@@ -164,7 +173,14 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
 		config: RestEndpointMethodTypes["pulls"]["get"]["parameters"],
 	) {
 		return ResultAsync.fromPromise(
-			this.octokit.pulls.get(config),
+			withAbort((signal) =>
+				this.octokit.pulls.get({
+					...config,
+					request: {
+						signal,
+					},
+				}),
+			),
 			(error) =>
 				new GHPullError("Could not retrieve pull from gh api", {
 					cause: error,
@@ -183,11 +199,16 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
 		>;
 	}) {
 		return ResultAsync.fromPromise(
-			this.octokit.pulls.listReviews({
-				...config,
-				pull_number: pr.number,
-				per_page: 100,
-			}),
+			withAbort((signal) =>
+				this.octokit.pulls.listReviews({
+					...config,
+					pull_number: pr.number,
+					per_page: 100,
+					request: {
+						signal,
+					},
+				}),
+			),
 			(error) =>
 				new GHPullReviewsError(
 					"One or more review list request failed from gh api",
@@ -220,29 +241,36 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
 				for (let i = 0; i < prs.length; i += chunkSize) {
 					chunks.push(prs.slice(i, i + chunkSize));
 				}
-				const promises = chunks.map(
-					(chunk) =>
-						new Promise<ChangeRequest[]>((resolve, reject) => {
-							const worker = new Worker(
-								new URL("./github.worker.ts", import.meta.url),
-							);
-							worker.postMessage({
-								prs: chunk,
-								config,
-								repo,
-								me,
-								token: this.token,
-							});
-							worker.on("message", (msg) => {
-								if (msg.error) {
-									reject(msg.error);
-								} else {
-									resolve(msg.results);
-								}
-								worker.terminate();
-							});
-							worker.on("error", reject);
-						}),
+				const promises = chunks.map((chunk) =>
+					withAbort(
+						(signal) =>
+							new Promise<ChangeRequest[]>((resolve, reject) => {
+								const worker = new Worker(
+									new URL("./github.worker.ts", import.meta.url),
+								);
+								worker.postMessage({
+									prs: chunk,
+									config,
+									repo,
+									me,
+									token: this.token,
+								});
+								worker.on("message", (msg) => {
+									if (msg.error) {
+										reject(msg.error);
+									} else {
+										resolve(msg.results);
+									}
+									worker.terminate();
+								});
+								worker.on("error", reject);
+
+								signal.addEventListener("abort", () => {
+									if (!worker) return;
+									worker.terminate();
+								});
+							}),
+					),
 				);
 				const chunkResults = await Promise.all(promises);
 				return chunkResults.flat();
