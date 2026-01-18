@@ -54,7 +54,7 @@ function App() {
 			}
 
 			const instance = initResult.value;
-			launch(instance);
+			await launch(instance);
 		}
 		run().finally(loadingStore.stop);
 	}, [
