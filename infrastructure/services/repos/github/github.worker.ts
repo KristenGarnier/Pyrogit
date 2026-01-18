@@ -1,15 +1,16 @@
-import { parentPort } from "node:worker_threads";
-import { Octokit } from "@octokit/rest";
 import type { RestEndpointMethodTypes } from "@octokit/rest";
+import { Octokit } from "@octokit/rest";
 import { ResultAsync } from "neverthrow";
-import type { ChangeRequest, UserRef } from "../../../../domain/change-request";
 import type { RepoRef } from "../../../../application/ports/change-request.repository";
+import type { ChangeRequest, UserRef } from "../../../../domain/change-request";
 import { GHPullReviewsError } from "../../../errors/GHPullReviewsError";
 import {
 	computeMyStatus,
 	computeOverallStatus,
 	pickMyLatestDecision,
 } from "./github.adapter.utils";
+
+declare var self: Worker;
 
 type GitHubPR =
 	| RestEndpointMethodTypes["pulls"]["list"]["response"]["data"][0]
@@ -87,34 +88,41 @@ function mapGitHubPR(
 	};
 }
 
-parentPort?.on(
+self.addEventListener(
 	"message",
-	async (data: {
-		prs: GitHubPR[];
-		config: Pick<
-			RestEndpointMethodTypes["pulls"]["listReviews"]["parameters"],
-			"owner" | "repo"
-		>;
-		repo: RepoRef;
-		me: UserRef;
-		token: string;
+	async (event: {
+		data: {
+			prs: GitHubPR[];
+			config: Pick<
+				RestEndpointMethodTypes["pulls"]["listReviews"]["parameters"],
+				"owner" | "repo"
+			>;
+			repo: RepoRef;
+			me: UserRef;
+			token: string;
+		};
 	}) => {
-		const octokit = new Octokit({ auth: data.token });
+		const octokit = new Octokit({ auth: event.data.token });
 		try {
 			const results = await Promise.all(
-				data.prs.map(async (pr) => {
+				event.data.prs.map(async (pr) => {
 					const reviews = await getReviews({
 						pr,
-						config: data.config,
+						config: event.data.config,
 						octokit,
 					});
 					if (reviews.isErr()) throw reviews.error;
-					return mapGitHubPR(data.repo, data.me, pr, reviews.value.data);
+					return mapGitHubPR(
+						event.data.repo,
+						event.data.me,
+						pr,
+						reviews.value.data,
+					);
 				}),
 			);
-			parentPort?.postMessage({ results });
+			postMessage({ results });
 		} catch (error) {
-			parentPort?.postMessage({ error });
+			postMessage({ error });
 		}
 	},
 );

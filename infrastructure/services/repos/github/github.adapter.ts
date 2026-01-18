@@ -1,8 +1,7 @@
-import { Octokit } from "@octokit/rest";
-import type { RestEndpointMethodTypes } from "@octokit/rest";
-import { err, ok, type Result, ResultAsync } from "neverthrow";
-import { Worker } from "node:worker_threads";
 import { cpus } from "node:os";
+import type { RestEndpointMethodTypes } from "@octokit/rest";
+import { Octokit } from "@octokit/rest";
+import { err, ok, type Result, ResultAsync } from "neverthrow";
 import type {
 	ChangeRequestRepository,
 	RepoRef,
@@ -17,14 +16,13 @@ import { GHPullError } from "../../../errors/GHPullError";
 import { GHPullListError } from "../../../errors/GHPullListError";
 import { GHPullReviewsError } from "../../../errors/GHPullReviewsError";
 import { NoUserError } from "../../../errors/NoUserError";
+import { withAbort } from "../../../react/src/utils/abort-request.utils";
+import { hasBeenUpdatedSince } from "../../../react/src/utils/date.utils";
 import {
 	computeMyStatus,
 	computeOverallStatus,
 	pickMyLatestDecision,
 } from "./github.adapter.utils";
-import { hasBeenUpdatedSince } from "../../../react/src/utils/date.utils";
-import { withAbort } from "../../../react/src/utils/abort-request.utils";
-import { signal } from "happy-dom/lib/PropertySymbol";
 
 type GitHubPR =
 	| RestEndpointMethodTypes["pulls"]["list"]["response"]["data"][0]
@@ -255,15 +253,15 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
 									me,
 									token: this.token,
 								});
-								worker.on("message", (msg) => {
-									if (msg.error) {
-										reject(msg.error);
+								worker.onmessage = (msg) => {
+									if (msg.data.error) {
+										reject(msg.data.error);
 									} else {
-										resolve(msg.results);
+										resolve(msg.data.results);
 									}
 									worker.terminate();
-								});
-								worker.on("error", reject);
+								};
+								worker.onerror = reject;
 
 								signal.addEventListener("abort", () => {
 									if (!worker) return;
