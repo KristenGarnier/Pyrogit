@@ -19,6 +19,8 @@ interface ChangeRequestStore {
 
 	setPRs(prs: ChangeRequest[]): void;
 	upsertPR(pr: ChangeRequest): void;
+	upsertPRs(prs: ChangeRequest[]): void;
+	deletePRs(prs: ChangeRequest[]): void;
 	clearPRs(): void;
 
 	setLoading(loading: boolean): void;
@@ -46,6 +48,35 @@ export const useChangeRequestStore = create<ChangeRequestStore>()(
 					const next = [...state.prs];
 					next[index] = pr;
 					return { prs: next };
+				}),
+			upsertPRs: (prs) =>
+				set((state) => {
+					const seen = new Set<number>();
+					const uniquePRs = prs.filter((pr) => {
+						const num = pr.id.number;
+						if (seen.has(num)) return false;
+						seen.add(num);
+						return true;
+					});
+					const indexes = uniquePRs.map((pr) => pr.id.number);
+					const stateFinal = state.prs
+						.filter((pr) => !indexes.includes(pr.id.number))
+						.concat(uniquePRs)
+						.sort((a, b) => b.id.number - a.id.number);
+
+					return { prs: stateFinal };
+				}),
+
+			deletePRs: (prs) =>
+				set((state) => {
+					const indexes = prs.map((pr) => pr.id.number);
+					const onlyOpen = state.prs.filter(
+						(pr) => !indexes.includes(pr.id.number),
+					);
+
+					return {
+						prs: onlyOpen,
+					};
 				}),
 
 			clearPRs: () => set({ prs: [] }),

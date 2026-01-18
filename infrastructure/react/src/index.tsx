@@ -88,10 +88,14 @@ function App() {
 
 	async function launch(instance: ChangeRequestService) {
 		try {
-			const requests = await instance.list({});
-			prStore.setPRs(requests);
+			const [updated, closed] = await Promise.all([
+				instance.list({}),
+				prStore.prs.length > 0 ? instance.listClosed({}) : Promise.resolve([]),
+			]);
+			prStore.upsertPRs(updated);
+			prStore.deletePRs(closed);
 
-			if (!requests) {
+			if (!updated) {
 				toast.info("There are no pull requests to load");
 				return;
 			}

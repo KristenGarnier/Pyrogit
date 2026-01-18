@@ -8,29 +8,47 @@ import type { RepoResolver } from "../ports/project.resolver.ts";
 import type { CurrentUserProvider } from "../ports/user.provider";
 import type { ChangeRequestUseCase } from "./change-request.interface";
 
+import type { Storage } from "../../infrastructure/services/storage/storage.interface";
+import { Result } from "neverthrow";
+
 type Deps = {
 	repoResolver: RepoResolver;
 	repository: ChangeRequestRepository;
 	currentUserProvider: CurrentUserProvider;
+	storage: Storage<string>;
 };
 
 export class ChangeRequestService implements ChangeRequestUseCase {
 	constructor(private readonly deps: Deps) {}
 
 	async list(query: ChangeRequestQuery): Promise<ChangeRequest[]> {
-		const [repoResult, me] = await Promise.all([
+		const [repoResult, me, readResult] = await Promise.all([
 			this.deps.repoResolver.resolveCurrentRepo(),
 			this.deps.currentUserProvider.getCurrentUser(),
+			this.deps.storage.read(),
 		]);
 
 		if (repoResult.isErr()) throw repoResult.error;
+
 		const repo = repoResult.value;
+		if (readResult.isOk()) {
+			const resultNewDate = Result.fromThrowable(
+				() => new Date(readResult.value),
+				(error) => new Error("Date could not be parsed", { cause: error }),
+			)();
+
+			if (resultNewDate.isErr()) throw resultNewDate.error;
+			query.since = resultNewDate.value;
+		}
 
 		const itemsResult = await this.deps.repository.list(repo, query);
 		if (itemsResult.isErr()) throw itemsResult.error;
 		const items = itemsResult.value;
 
-		// Filtres/tri métier (un minimum)
+		// Update last run after successful fetch
+		// Does not need to block the thread
+		this.deps.storage.write(new Date().toISOString());
+
 		let out = items.slice();
 
 		const f = query.filter;
@@ -40,7 +58,6 @@ export class ChangeRequestService implements ChangeRequestUseCase {
 		}
 
 		if (f?.needsMyReview === true) {
-			// si "me" inconnu, on ne filtre pas (sinon tu caches des PR par erreur)
 			if (me) out = out.filter((x) => x.review.myStatus.kind === "needed");
 		}
 
@@ -57,6 +74,36 @@ export class ChangeRequestService implements ChangeRequestUseCase {
 		if (query.limit && query.limit > 0) out = out.slice(0, query.limit);
 
 		return out;
+	}
+
+	async listClosed(query: ChangeRequestQuery): Promise<ChangeRequest[]> {
+		const [repoResult, readResult] = await Promise.all([
+			this.deps.repoResolver.resolveCurrentRepo(),
+			this.deps.storage.read(),
+		]);
+
+		if (repoResult.isErr()) throw repoResult.error;
+
+		const repo = repoResult.value;
+		if (readResult.isOk()) {
+			const resultNewDate = Result.fromThrowable(
+				() => new Date(readResult.value),
+				(error) => new Error("Date could not be parsed", { cause: error }),
+			)();
+
+			if (resultNewDate.isErr()) throw resultNewDate.error;
+			query.since = resultNewDate.value;
+		}
+
+		const itemsResult = await this.deps.repository.listClosed(repo, query);
+		if (itemsResult.isErr()) throw itemsResult.error;
+		const items = itemsResult.value;
+
+		// Update last run after successful fetch
+		// Does not need to block the thread
+		this.deps.storage.write(new Date().toISOString());
+
+		return items;
 	}
 
 	async getById(id: ChangeRequestId): Promise<ChangeRequest> {

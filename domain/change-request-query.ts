@@ -9,4 +9,5 @@ export type ChangeRequestQuery = {
 	filter?: ChangeRequestFilter;
 	sort?: ChangeRequestSort;
 	limit?: number;
+	since?: Date;
 };

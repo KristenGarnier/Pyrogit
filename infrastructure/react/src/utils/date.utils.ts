@@ -7,3 +7,10 @@ export function isRecent(date: Date) {
 
 	return daysDiff <= 1;
 }
+
+export function hasBeenUpdatedSince(lastUpdate: Date, since: Date) {
+	const sinceDay = dayjs(since);
+	const updateDay = dayjs(lastUpdate);
+
+	return sinceDay.isBefore(updateDay);
+}

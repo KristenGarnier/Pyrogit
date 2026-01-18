@@ -22,6 +22,7 @@ import {
 	computeOverallStatus,
 	pickMyLatestDecision,
 } from "./github.adapter.utils";
+import { hasBeenUpdatedSince } from "../../../react/src/utils/date.utils";
 
 type GitHubPR =
 	| RestEndpointMethodTypes["pulls"]["list"]["response"]["data"][0]
@@ -48,7 +49,7 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
 
 	async list(
 		repo: RepoRef,
-		_query: ChangeRequestQuery,
+		query: ChangeRequestQuery,
 	): Promise<
 		Result<ChangeRequest[], Error | GHPullListError | GHPullReviewsError>
 	> {
@@ -58,22 +59,66 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
 		const config = {
 			owner: repo.owner,
 			repo: repo.repo,
+			since: query.since,
 		};
 
 		const result = await this.getPullsList({
 			...config,
 			state: "open",
 			per_page: 100,
-		}).andThen(({ data: prs }) =>
-			this.getReviewsList({
+		}).andThen(({ data: prs }) => {
+			const prsSince = prs.filter((pr) =>
+				query.since
+					? hasBeenUpdatedSince(new Date(pr.updated_at), query.since)
+					: true,
+			);
+			if (prsSince.length === 0) return ok([]);
+
+			return this.getReviewsList({
 				config: { ...config },
-				prs,
+				prs: prsSince,
 				repo,
 				me,
-			}),
-		);
-
+			});
+		});
 		if (result.isErr()) return err(result.error);
+
+		return ok(result.value);
+	}
+
+	async listClosed(
+		repo: RepoRef,
+		query: ChangeRequestQuery,
+	): Promise<Result<ChangeRequest[], Error | GHPullListError>> {
+		const me = await this.meProvider();
+		if (!me) return err(new NoUserError("User could not be found"));
+
+		const config = {
+			owner: repo.owner,
+			repo: repo.repo,
+			since: query.since,
+		};
+
+		const result = await this.getPullsList({
+			...config,
+			state: "closed",
+			per_page: 100,
+		}).andThen(({ data: prs }) => {
+			const prsSince = prs.filter((pr) =>
+				query.since
+					? hasBeenUpdatedSince(new Date(pr.updated_at), query.since)
+					: true,
+			);
+			if (prsSince.length === 0) return ok([]);
+
+			const changeRequest = prsSince.map((pr) =>
+				this.mapGitHubPR(repo, me, pr, []),
+			);
+
+			return ok(changeRequest);
+		});
+		if (result.isErr()) return err(result.error);
+
 		return ok(result.value);
 	}
 

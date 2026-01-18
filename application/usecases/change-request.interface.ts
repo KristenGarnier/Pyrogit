@@ -12,6 +12,8 @@ export interface ChangeRequestUseCase {
 	 */
 	list(query: ChangeRequestQuery): Promise<ChangeRequest[]>;
 
+	listClosed(query: ChangeRequestQuery): Promise<ChangeRequest[]>;
+
 	/**
 	 * Détail d’une Change Request
 	 */

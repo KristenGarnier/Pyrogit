@@ -32,10 +32,10 @@ export class Pyrogit {
 			}
 
 			const token = tokenResult.value;
-			this._pyro = init(token);
+			this._pyro = await init(token);
 			await this._pyro.checkAuth();
 
-			return ok(this._pyro!);
+			return ok(this._pyro);
 		} catch (error: unknown) {
 			let e = new Error("Unspecified Error");
 			if (!(error instanceof Error)) e = new Error(String(error));

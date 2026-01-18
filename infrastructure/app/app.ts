@@ -3,6 +3,9 @@ import { ChangeRequestService } from "../../application/usecases/change-request.
 import { GitHubChangeRequestRepository } from "../services/repos/github/github.adapter";
 import { GitRemoteRepoResolver } from "../services/repos/resolver.adapter";
 import { GitHubCurrentUserProvider } from "../services/repos/user.adapter";
+import { FileStorage } from "../services/storage/file.storage";
+import { AppDirectories } from "../services/storage/locator.storage";
+import * as path from "node:path";
 
 const silentLogger = {
 	debug: () => {},
@@ -11,7 +14,7 @@ const silentLogger = {
 	error: () => {},
 };
 
-export function init(token: string) {
+export async function init(token: string) {
 	const octokit = new Octokit({ auth: token, log: silentLogger });
 
 	const repoResolver = new GitRemoteRepoResolver({ remoteName: "origin" });
@@ -21,9 +24,14 @@ export function init(token: string) {
 		currentUserProvider.getCurrentUser(),
 	);
 
+	const configDir = new AppDirectories("pyrogit").getPath("cache");
+	const lastRunFile = path.join(configDir, "last-run.json");
+	const storage = new FileStorage(lastRunFile);
+
 	return new ChangeRequestService({
 		repoResolver,
 		repository,
 		currentUserProvider,
+		storage,
 	});
 }
