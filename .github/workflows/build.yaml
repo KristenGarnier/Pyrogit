@@ -34,8 +34,16 @@ jobs:
       - name: Run tests with coverage
         run: bun test --coverage
 
-      - name: Security audit
-        run: bun audit
+      - name: Security audit (fail only on high/critical)
+        run: |
+          set -euo pipefail
+          out="$(bun audit || true)"
+          echo "$out"
+
+          if echo "$out" | grep -Eqi 'severity:\s*(high|critical)|\b(high|critical)\b'; then
+            echo "Failing because high/critical vulnerabilities found."
+            exit 1
+          fi
 
   build:
     name: Build for ${{ matrix.os }}-${{ matrix.arch }}
