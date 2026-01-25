@@ -5,10 +5,11 @@ import { RootLocator } from "../../../services/locator/locators";
 import { createSimpleStorage } from "../utils/init-file-storage.utils";
 import { zustandFileStorage } from "../utils/zustand-file-storage.utils";
 
-const projectPath = new RootLocator().findDir();
-const projectPathName = projectPath
-	? `${projectPath.split("/")[projectPath.split("/").length - 1]}-prs.enc`
-	: "unknown-prs.enc";
+const resultProjectPathName = new RootLocator().findDir();
+let projectPathName = "unknown-prs.enc";
+if (resultProjectPathName.isOk()) {
+	projectPathName = `${resultProjectPathName.value.split("/")[resultProjectPathName.value.split("/").length - 1]}-prs.enc`;
+}
 
 interface ChangeRequestStore {
 	prs: ChangeRequest[];

@@ -1,4 +1,3 @@
-import { cpus } from "node:os";
 import type { RestEndpointMethodTypes } from "@octokit/rest";
 import { Octokit } from "@octokit/rest";
 import { err, ok, type Result, ResultAsync } from "neverthrow";
@@ -23,7 +22,6 @@ import {
 	computeOverallStatus,
 	pickMyLatestDecision,
 } from "./github.adapter.utils";
-import { data } from "happy-dom/lib/PropertySymbol";
 
 type GitHubPR =
 	| RestEndpointMethodTypes["pulls"]["list"]["response"]["data"][0]
@@ -33,17 +31,14 @@ type Reviews =
 
 export class GitHubChangeRequestRepository implements ChangeRequestRepository {
 	private readonly octokit: Octokit;
-	private readonly token: string;
 
 	constructor(
 		token: string | Octokit,
-		private readonly meProvider: () => Promise<UserRef | null>,
+		private readonly meProvider: () => Promise<Result<UserRef, Error>>,
 	) {
 		if (typeof token === "string") {
-			this.token = token;
 			this.octokit = new Octokit({ auth: token });
 		} else {
-			this.token = "mock";
 			this.octokit = token;
 		}
 	}
@@ -55,7 +50,7 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
 		Result<ChangeRequest[], Error | GHPullListError | GHPullReviewsError>
 	> {
 		const me = await this.meProvider();
-		if (!me) return err(new NoUserError("User could not be found"));
+		if (me.isErr()) return err(new NoUserError("User could not be found"));
 
 		const config = {
 			owner: repo.owner,
@@ -79,7 +74,7 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
 				config: { ...config },
 				prs: prsSince,
 				repo,
-				me,
+				me: me.value,
 			});
 		});
 		if (result.isErr()) return err(result.error);
@@ -92,7 +87,7 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
 		query: ChangeRequestQuery,
 	): Promise<Result<ChangeRequest[], Error | GHPullListError>> {
 		const me = await this.meProvider();
-		if (!me) return err(new NoUserError("User could not be found"));
+		if (me.isErr()) return err(new NoUserError("User could not be found"));
 
 		const config = {
 			owner: repo.owner,
@@ -113,7 +108,7 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
 			if (prsSince.length === 0) return ok([]);
 
 			const changeRequest = prsSince.map((pr) =>
-				this.mapGitHubPR(repo, me, pr, []),
+				this.mapGitHubPR(repo, me.value, pr, []),
 			);
 
 			return ok(changeRequest);
@@ -127,7 +122,7 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
 		id: ChangeRequestId,
 	): Promise<Result<ChangeRequest, Error | GHPullError | GHPullReviewsError>> {
 		const me = await this.meProvider();
-		if (!me) return err(new NoUserError("could not be found"));
+		if (me.isErr()) return err(new NoUserError("could not be found"));
 
 		const result = await this.getPull({
 			owner: id.owner,
@@ -141,7 +136,7 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
 				},
 				pr: response.data,
 			}).map((reviews) => {
-				return this.mapGitHubPR(id, me, response.data, reviews.data);
+				return this.mapGitHubPR(id, me.value, response.data, reviews.data);
 			});
 		});
 

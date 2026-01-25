@@ -1,6 +1,15 @@
 import { statSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { err, ok } from "neverthrow";
+import {
+	LocatorAccessError,
+	LocatorNoParentError,
+} from "../../errors/LocatorError";
 import type { Locator } from "./locator.interface";
+
+function isErrnoError(err: unknown): err is Error & { code?: string } {
+	return err instanceof Error && "code" in err;
+}
 
 export class GitLocator implements Locator {
 	findDir() {
@@ -12,21 +21,29 @@ export class GitLocator implements Locator {
 			try {
 				const stat = statSync(gitPath);
 
-				if (stat.isDirectory()) return gitPath;
+				if (stat.isDirectory()) return ok(gitPath);
 
-				if (stat.isFile()) return gitPath;
-			} catch (err: any) {
+				if (stat.isFile()) return ok(gitPath);
+			} catch (error: unknown) {
 				if (
-					err.code !== "ENOENT" &&
-					err.code !== "ENOTDIR" &&
-					err.code !== "EACCES"
+					isErrnoError(error) &&
+					error.code !== "ENOENT" &&
+					error.code !== "ENOTDIR" &&
+					error.code !== "EACCES"
 				) {
-					return null;
+					return err(
+						new LocatorAccessError("Could not get the .git path", {
+							cause: error,
+						}),
+					);
 				}
 			}
 
 			const parent = dirname(dir);
-			if (parent === dir) return null;
+			if (parent === dir)
+				return err(
+					new LocatorNoParentError("There is not other parent to search"),
+				);
 			dir = parent;
 		}
 	}
@@ -39,9 +56,9 @@ export class RootLocator implements Locator {
 	}
 
 	findDir() {
-		const dir = this.locator.findDir();
-		if (!dir) return dir;
+		const result = this.locator.findDir();
+		if (result.isErr()) return result;
 
-		return dir.replace("/.git", "");
+		return ok(result.value.replace("/.git", ""));
 	}
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it, mock, beforeEach } from "bun:test";
 import { GitHubChangeRequestRepository } from "../infrastructure/services/repos/github/github.adapter";
+import { ok, err } from "neverthrow";
 
 class MockWorker {
   listeners: any = {};
@@ -122,7 +123,7 @@ describe("GitHubChangeRequestRepository", () => {
 			},
 		} as any;
 		(global as any).mockOctokit = mockOctokit;
-		const meProvider = mock(() => Promise.resolve(mockUser));
+		const meProvider = mock(() => Promise.resolve(ok(mockUser)));
 		repo = new GitHubChangeRequestRepository(mockOctokit, meProvider);
 	});
 
@@ -139,7 +140,7 @@ describe("GitHubChangeRequestRepository", () => {
 		});
 
 		it("should return error when user is not found", async () => {
-			const meProvider = mock(() => Promise.resolve(null));
+			const meProvider = mock(() => Promise.resolve(err(new Error("User not found"))));
 			repo = new GitHubChangeRequestRepository(mockOctokit, meProvider);
 
 			const query: ChangeRequestQuery = {};
@@ -196,7 +197,7 @@ describe("GitHubChangeRequestRepository", () => {
 		});
 
 		it("should return error when user is not found", async () => {
-			const meProvider = mock(() => Promise.resolve(null));
+			const meProvider = mock(() => Promise.resolve(err(new Error("User not found"))));
 			repo = new GitHubChangeRequestRepository(mockOctokit, meProvider);
 
 			const result = await repo.getById({

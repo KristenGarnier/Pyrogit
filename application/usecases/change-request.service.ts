@@ -29,6 +29,7 @@ export class ChangeRequestService implements ChangeRequestUseCase {
 		]);
 
 		if (repoResult.isErr()) throw repoResult.error;
+		if (me.isErr()) throw me.error;
 
 		const repo = repoResult.value;
 		if (readResult.isOk()) {
@@ -114,11 +115,13 @@ export class ChangeRequestService implements ChangeRequestUseCase {
 
 	async checkAuth(): Promise<boolean> {
 		const result = await this.deps.currentUserProvider.getCurrentUser();
-		if (!result) throw new Error("Token is not correct");
+		if (result.isErr()) throw new Error("Token is not correct");
 		return true;
 	}
 
 	async getUser() {
-		return this.deps.currentUserProvider.getCurrentUser();
+		const me = await this.deps.currentUserProvider.getCurrentUser();
+		if (me.isErr()) return null;
+		return me.value;
 	}
 }
