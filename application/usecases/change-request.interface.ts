@@ -1,25 +1,21 @@
-import type {
-	ChangeRequest,
-	ChangeRequestId,
-	UserRef,
-} from "../../domain/change-request";
+import type { ChangeRequest, ChangeRequestId, UserRef } from "../../domain/change-request";
 import type { ChangeRequestQuery } from "../../domain/change-request-query";
 
 export interface ChangeRequestUseCase {
-	/**
-	 * Liste les Change Requests (PR/MR)
-	 * selon les filtres / tris métier
-	 */
-	list(query: ChangeRequestQuery): Promise<ChangeRequest[]>;
+  /**
+   * Liste les Change Requests (PR/MR)
+   * selon les filtres / tris métier
+   */
+  list(query: ChangeRequestQuery): Promise<ChangeRequest[]>;
 
-	listClosed(query: ChangeRequestQuery): Promise<ChangeRequest[]>;
+  listClosed(query: ChangeRequestQuery): Promise<ChangeRequest[]>;
 
-	/**
-	 * Détail d’une Change Request
-	 */
-	getById(id: ChangeRequestId): Promise<ChangeRequest>;
+  /**
+   * Détail d’une Change Request
+   */
+  getById(id: ChangeRequestId): Promise<ChangeRequest>;
 
-	checkAuth(): Promise<boolean>;
+  checkAuth(): Promise<boolean>;
 
-	getUser(): Promise<UserRef | null>;
+  getUser(): Promise<UserRef | null>;
 }

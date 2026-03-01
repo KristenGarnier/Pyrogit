@@ -20,9 +20,7 @@ class MockWorker {
           // simulate mapGitHubPR
           const reviews = reviewsResponse.data;
           const meLogin = data.me?.login?.toLowerCase();
-          const isMyPR = Boolean(
-            meLogin && pr.user && meLogin === pr.user.login.toLowerCase(),
-          );
+          const isMyPR = Boolean(meLogin && pr.user && meLogin === pr.user.login.toLowerCase());
           const activeReviews = reviews.filter((r: any) => r.state !== "DISMISSED");
           const overallStatus = activeReviews.some((r: any) => r.state === "CHANGES_REQUESTED")
             ? "changes_requested"
@@ -40,11 +38,7 @@ class MockWorker {
             author: pr.user ? { login: pr.user.login } : { login: "unknown" },
             taget: pr.base.ref,
             branch: pr.head.ref,
-            state: pr.merged_at
-              ? "merged"
-              : pr.state === "closed"
-                ? "closed"
-                : "open",
+            state: pr.merged_at ? "merged" : pr.state === "closed" ? "closed" : "open",
             isDraft: Boolean(pr.draft),
             updatedAt: new Date(pr.updated_at),
             webUrl: pr.html_url,
@@ -58,18 +52,24 @@ class MockWorker {
           };
           results.push(cr);
         }
-        this.listeners.message({ data: {results} });
+        this.listeners.message({ data: { results } });
       } catch (error) {
-        this.listeners.message({ data : {error: new GHPullReviewsError("One or more review list request failed from gh api", { cause: error }) }});
+        this.listeners.message({
+          data: {
+            error: new GHPullReviewsError("One or more review list request failed from gh api", {
+              cause: error,
+            }),
+          },
+        });
       }
     })();
   }
   set onmessage(listener: any) {
-    this.listeners["message"] = listener
+    this.listeners["message"] = listener;
   }
   set onerror(listener: any) {
     this.listeners["error"] = listener;
-  } 
+  }
   terminate() {}
 }
 
@@ -85,165 +85,161 @@ import { NoUserError } from "../infrastructure/errors/NoUserError";
 // Mock data
 const mockUser = { login: "testuser" };
 const mockPR = {
-	number: 1,
-	title: "Test PR",
-	user: { login: "author" },
-	base: { ref: "main" },
-	head: { ref: "feature" },
-	merged_at: null,
-	state: "open",
-	draft: false,
-	updated_at: "2023-01-01T00:00:00Z",
-	html_url: "https://github.com/test/repo/pull/1",
-	requested_reviewers: [{ login: "testuser" }],
+  number: 1,
+  title: "Test PR",
+  user: { login: "author" },
+  base: { ref: "main" },
+  head: { ref: "feature" },
+  merged_at: null,
+  state: "open",
+  draft: false,
+  updated_at: "2023-01-01T00:00:00Z",
+  html_url: "https://github.com/test/repo/pull/1",
+  requested_reviewers: [{ login: "testuser" }],
 };
 const mockReviews = [
-	{
-		user: { login: "reviewer1" },
-		state: "APPROVED",
-		submitted_at: "2023-01-01T00:00:00Z",
-	},
-	{
-		user: { login: "testuser" },
-		state: "COMMENTED",
-		submitted_at: "2023-01-01T00:00:00Z",
-	},
+  {
+    user: { login: "reviewer1" },
+    state: "APPROVED",
+    submitted_at: "2023-01-01T00:00:00Z",
+  },
+  {
+    user: { login: "testuser" },
+    state: "COMMENTED",
+    submitted_at: "2023-01-01T00:00:00Z",
+  },
 ];
 
 describe("GitHubChangeRequestRepository", () => {
-	let mockOctokit: Octokit;
-	let repo: GitHubChangeRequestRepository;
+  let mockOctokit: Octokit;
+  let repo: GitHubChangeRequestRepository;
 
-	beforeEach(() => {
-		mockOctokit = {
-			pulls: {
-				list: mock(() => Promise.resolve({ data: [mockPR] })),
-				get: mock(() => Promise.resolve({ data: mockPR })),
-				listReviews: mock(() => Promise.resolve({ data: mockReviews })),
-			},
-		} as any;
-		(global as any).mockOctokit = mockOctokit;
-		const meProvider = mock(() => Promise.resolve(ok(mockUser)));
-		repo = new GitHubChangeRequestRepository(mockOctokit, meProvider);
-	});
+  beforeEach(() => {
+    mockOctokit = {
+      pulls: {
+        list: mock(() => Promise.resolve({ data: [mockPR] })),
+        get: mock(() => Promise.resolve({ data: mockPR })),
+        listReviews: mock(() => Promise.resolve({ data: mockReviews })),
+      },
+    } as any;
+    (global as any).mockOctokit = mockOctokit;
+    const meProvider = mock(() => Promise.resolve(ok(mockUser)));
+    repo = new GitHubChangeRequestRepository(mockOctokit, meProvider);
+  });
 
-	describe("list", () => {
-		it("should return change requests for open PRs", async () => {
-			const query: ChangeRequestQuery = {};
-			const result = await repo.list({ owner: "test", repo: "repo" }, query);
+  describe("list", () => {
+    it("should return change requests for open PRs", async () => {
+      const query: ChangeRequestQuery = {};
+      const result = await repo.list({ owner: "test", repo: "repo" }, query);
 
-			expect(result.isOk()).toBe(true);
-			if (result.isOk()) {
-				expect(result.value).toHaveLength(1);
-				expect(result.value[0]).toMatchSnapshot();
-			}
-		});
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value).toHaveLength(1);
+        expect(result.value[0]).toMatchSnapshot();
+      }
+    });
 
-		it("should return error when user is not found", async () => {
-			const meProvider = mock(() => Promise.resolve(err(new Error("User not found"))));
-			repo = new GitHubChangeRequestRepository(mockOctokit, meProvider);
+    it("should return error when user is not found", async () => {
+      const meProvider = mock(() => Promise.resolve(err(new Error("User not found"))));
+      repo = new GitHubChangeRequestRepository(mockOctokit, meProvider);
 
-			const query: ChangeRequestQuery = {};
-			const result = await repo.list({ owner: "test", repo: "repo" }, query);
+      const query: ChangeRequestQuery = {};
+      const result = await repo.list({ owner: "test", repo: "repo" }, query);
 
-			expect(result.isErr()).toBe(true);
-			if (result.isErr()) {
-				expect(result.error).toBeInstanceOf(NoUserError);
-			}
-		});
+      expect(result.isErr()).toBe(true);
+      if (result.isErr()) {
+        expect(result.error).toBeInstanceOf(NoUserError);
+      }
+    });
 
-		it("should handle pulls list API errors", async () => {
-			(mockOctokit as any).pulls.list = mock(() =>
-				Promise.reject(new Error("API Error")),
-			);
+    it("should handle pulls list API errors", async () => {
+      (mockOctokit as any).pulls.list = mock(() => Promise.reject(new Error("API Error")));
 
-			const query: ChangeRequestQuery = {};
-			const result = await repo.list({ owner: "test", repo: "repo" }, query);
+      const query: ChangeRequestQuery = {};
+      const result = await repo.list({ owner: "test", repo: "repo" }, query);
 
-			expect(result.isErr()).toBe(true);
-			if (result.isErr()) {
-				expect(result.error).toBeInstanceOf(GHPullListError);
-			}
-		});
+      expect(result.isErr()).toBe(true);
+      if (result.isErr()) {
+        expect(result.error).toBeInstanceOf(GHPullListError);
+      }
+    });
 
-		it("should handle reviews API errors", async () => {
-			(mockOctokit as any).pulls.listReviews = mock(() =>
-				Promise.reject(new Error("Reviews API Error")),
-			);
+    it("should handle reviews API errors", async () => {
+      (mockOctokit as any).pulls.listReviews = mock(() =>
+        Promise.reject(new Error("Reviews API Error")),
+      );
 
-			const query: ChangeRequestQuery = {};
-			const result = await repo.list({ owner: "test", repo: "repo" }, query);
+      const query: ChangeRequestQuery = {};
+      const result = await repo.list({ owner: "test", repo: "repo" }, query);
 
-			expect(result.isErr()).toBe(true);
-			if (result.isErr()) {
-				expect(result.error).toBeInstanceOf(GHPullReviewsError);
-			}
-		});
-	});
+      expect(result.isErr()).toBe(true);
+      if (result.isErr()) {
+        expect(result.error).toBeInstanceOf(GHPullReviewsError);
+      }
+    });
+  });
 
-	describe("getById", () => {
-		it("should return change request by ID", async () => {
-			const result = await repo.getById({
-				owner: "test",
-				repo: "repo",
-				number: 1,
-			});
+  describe("getById", () => {
+    it("should return change request by ID", async () => {
+      const result = await repo.getById({
+        owner: "test",
+        repo: "repo",
+        number: 1,
+      });
 
-			expect(result.isOk()).toBe(true);
-			if (result.isOk()) {
-				expect(result.value.id.number).toBe(1);
-				expect(result.value).toMatchSnapshot();
-			}
-		});
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.id.number).toBe(1);
+        expect(result.value).toMatchSnapshot();
+      }
+    });
 
-		it("should return error when user is not found", async () => {
-			const meProvider = mock(() => Promise.resolve(err(new Error("User not found"))));
-			repo = new GitHubChangeRequestRepository(mockOctokit, meProvider);
+    it("should return error when user is not found", async () => {
+      const meProvider = mock(() => Promise.resolve(err(new Error("User not found"))));
+      repo = new GitHubChangeRequestRepository(mockOctokit, meProvider);
 
-			const result = await repo.getById({
-				owner: "test",
-				repo: "repo",
-				number: 1,
-			});
+      const result = await repo.getById({
+        owner: "test",
+        repo: "repo",
+        number: 1,
+      });
 
-			expect(result.isErr()).toBe(true);
-			if (result.isErr()) {
-				expect(result.error).toBeInstanceOf(NoUserError);
-			}
-		});
+      expect(result.isErr()).toBe(true);
+      if (result.isErr()) {
+        expect(result.error).toBeInstanceOf(NoUserError);
+      }
+    });
 
-		it("should handle pull get API errors", async () => {
-			(mockOctokit as any).pulls.get = mock(() =>
-				Promise.reject(new Error("API Error")),
-			);
+    it("should handle pull get API errors", async () => {
+      (mockOctokit as any).pulls.get = mock(() => Promise.reject(new Error("API Error")));
 
-			const result = await repo.getById({
-				owner: "test",
-				repo: "repo",
-				number: 1,
-			});
+      const result = await repo.getById({
+        owner: "test",
+        repo: "repo",
+        number: 1,
+      });
 
-			expect(result.isErr()).toBe(true);
-			if (result.isErr()) {
-				expect(result.error).toBeInstanceOf(GHPullError);
-			}
-		});
+      expect(result.isErr()).toBe(true);
+      if (result.isErr()) {
+        expect(result.error).toBeInstanceOf(GHPullError);
+      }
+    });
 
-		it("should handle reviews API errors", async () => {
-			(mockOctokit as any).pulls.listReviews = mock(() =>
-				Promise.reject(new Error("Reviews API Error")),
-			);
+    it("should handle reviews API errors", async () => {
+      (mockOctokit as any).pulls.listReviews = mock(() =>
+        Promise.reject(new Error("Reviews API Error")),
+      );
 
-			const result = await repo.getById({
-				owner: "test",
-				repo: "repo",
-				number: 1,
-			});
+      const result = await repo.getById({
+        owner: "test",
+        repo: "repo",
+        number: 1,
+      });
 
-			expect(result.isErr()).toBe(true);
-			if (result.isErr()) {
-				expect(result.error).toBeInstanceOf(GHPullReviewsError);
-			}
-		});
-	});
+      expect(result.isErr()).toBe(true);
+      if (result.isErr()) {
+        expect(result.error).toBeInstanceOf(GHPullReviewsError);
+      }
+    });
+  });
 });

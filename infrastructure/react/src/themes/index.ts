@@ -4,20 +4,16 @@ export { ayuDarkTheme, ayuLightTheme, ayuMirageTheme } from "./ayu";
 // Catppuccin themes
 export { catppuccinMochaTheme } from "./captuccin-mocha";
 export {
-	catppuccinFrappeTheme,
-	catppuccinLatteTheme,
-	catppuccinMacchiatoTheme,
+  catppuccinFrappeTheme,
+  catppuccinLatteTheme,
+  catppuccinMacchiatoTheme,
 } from "./catppuccin-variations";
 // Colorful themes
 export { cobalt2Theme } from "./cobalt2";
 // Popular themes
 export { draculaTheme } from "./dracula";
 // GitHub themes
-export {
-	githubDarkDimmedTheme,
-	githubDarkTheme,
-	githubLightTheme,
-} from "./github";
+export { githubDarkDimmedTheme, githubDarkTheme, githubLightTheme } from "./github";
 export { gruvboxDarkTheme, gruvboxLightTheme } from "./gruvbox";
 // Material Design
 export { materialPalenightTheme, materialTheme } from "./material";

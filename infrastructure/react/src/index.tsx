@@ -15,131 +15,121 @@ import { useLoadingStore } from "./stores/loading";
 import { useTabFocus } from "./stores/tab.focus.store";
 import { useToastActions } from "./stores/toast.store";
 import { useUserStore } from "./stores/user.store";
-import { isAction } from "./utils/key-mapper";
 import { abortAll } from "./utils/abort-request.utils";
-import { udpSocket } from "bun";
+import { isAction } from "./utils/key-mapper";
 
 const Pyro = new Pyrogit();
 
 function App() {
-	const loadingStore = useLoadingStore();
-	const prStore = useChangeRequestStore();
-	const tabFocusStore = useTabFocus();
-	const toast = useToastActions();
-	const userStore = useUserStore();
+  const loadingStore = useLoadingStore();
+  const prStore = useChangeRequestStore();
+  const tabFocusStore = useTabFocus();
+  const toast = useToastActions();
+  const userStore = useUserStore();
 
-	const [instanceCRService, setCRServiceInstance] = useState<
-		ChangeRequestService | undefined
-	>();
-	//
-	const renderer = useRenderer();
-	useEffect(() => {
-		if (process.env.CONSOLE_DISPLAY) renderer.console.show();
-	}, [renderer.console.show]);
+  const [instanceCRService, setCRServiceInstance] = useState<ChangeRequestService | undefined>();
+  //
+  const renderer = useRenderer();
+  useEffect(() => {
+    if (process.env.CONSOLE_DISPLAY) renderer.console.show();
+  }, [renderer.console.show]);
 
-	// 	// biome-ignore lint/correctness/useExhaustiveDependencies: I do not need launch dependency it changes every render
-	useEffect(() => {
-		async function run() {
-			loadingStore.start("Loading the app");
-			const initResult = await Pyro.init();
-			if (initResult.isErr()) {
-				const error = initResult.error;
-				if (isTaggedError(error) && error._tag === GH_TOKEN_ERROR) {
-					tabFocusStore.focusCustom("ask-login");
-					toast.error("Failed to log the user");
-				} else {
-					toast.error("Failed to initialize app");
-				}
+  // 	// biome-ignore lint/correctness/useExhaustiveDependencies: I do not need launch dependency it changes every render
+  useEffect(() => {
+    async function run() {
+      loadingStore.start("Loading the app");
+      const initResult = await Pyro.init();
+      if (initResult.isErr()) {
+        const error = initResult.error;
+        if (isTaggedError(error) && error._tag === GH_TOKEN_ERROR) {
+          tabFocusStore.focusCustom("ask-login");
+          toast.error("Failed to log the user");
+        } else {
+          toast.error("Failed to initialize app");
+        }
 
-				return;
-			}
+        return;
+      }
 
-			const instance = initResult.value;
-			await launch(instance);
-		}
-		run().finally(loadingStore.stop);
-	}, [
-		loadingStore.stop,
-		loadingStore.start,
-		toast.error,
-		tabFocusStore.focusCustom,
-	]);
+      const instance = initResult.value;
+      await launch(instance);
+    }
+    run().finally(loadingStore.stop);
+  }, [loadingStore.stop, loadingStore.start, toast.error, tabFocusStore.focusCustom]);
 
-	useKeyboard((key) => {
-		if (tabFocusStore.disabled) return;
+  useKeyboard((key) => {
+    if (tabFocusStore.disabled) return;
 
-		if (isAction(key.name, "tab")) {
-			tabFocusStore.cycle();
-		}
+    if (isAction(key.name, "tab")) {
+      tabFocusStore.cycle();
+    }
 
-		if (isAction(key.name, "help")) {
-			tabFocusStore.focusCustom("help");
-		}
+    if (isAction(key.name, "help")) {
+      tabFocusStore.focusCustom("help");
+    }
 
-		if (isAction(key.name, "refresh")) {
-			if (!instanceCRService)
-				return toast.warning(
-					"Instance not yet initialized, retry in few seconds",
-				);
+    if (isAction(key.name, "refresh")) {
+      if (!instanceCRService)
+        return toast.warning("Instance not yet initialized, retry in few seconds");
 
-			loadingStore.start("Updating prs");
-			toast.info("Fetching updated prs");
-			launch(instanceCRService);
-		}
-	});
+      loadingStore.start("Updating prs");
+      toast.info("Fetching updated prs");
+      launch(instanceCRService);
+    }
+  });
 
-	async function launch(instance: ChangeRequestService) {
-		try {
-			const [updated, closed] = await Promise.all([
-				instance.list({}),
-				prStore.prs.length > 0 ? instance.listClosed({}) : Promise.resolve([]),
-			]);
-			prStore.upsertPRs(updated);
-			prStore.deletePRs(closed);
+  async function launch(instance: ChangeRequestService) {
+    try {
+      const [updated, closed] = await Promise.all([
+        instance.list({}),
+        prStore.prs.length > 0 ? instance.listClosed({}) : Promise.resolve([]),
+      ]);
+      prStore.upsertPRs(updated);
+      prStore.deletePRs(closed);
 
-			if (!updated) {
-				toast.info("There are no pull requests to load");
-				return;
-			}
-			toast.success("Pull requests loaded successfully");
+      if (!updated) {
+        toast.info("There are no pull requests to load");
+        return;
+      }
+      toast.success("Pull requests loaded successfully");
 
-			const user = await instance.getUser();
-			if (!user) {
-				toast.error("Could not load user");
-				return;
-			}
+      const user = await instance.getUser();
+      if (!user) {
+        toast.error("Could not load user");
+        return;
+      }
 
-			if (userStore.user) return;
+      if (userStore.user) return;
 
-			userStore.set(user);
-			toast.success("User loaded successfully");
-		} finally {
-			if (!instanceCRService) setCRServiceInstance(instance);
-			loadingStore.stop();
-		}
-	}
+      userStore.set(user);
+      toast.success("User loaded successfully");
+    } finally {
+      if (!instanceCRService) setCRServiceInstance(instance);
+      loadingStore.stop();
+    }
+  }
 
-	return (
-		<Layout>
-			<box flexDirection="column">
-				<box flexDirection="row">{<PullRequestManager />}</box>
-			</box>
-			{tabFocusStore.current === "ask-login" && <GhLogin />}
-			{tabFocusStore.current === "choose-theme" && <ThemeChooser />}
-			{tabFocusStore.current === "help" && <HelpModal />}
-		</Layout>
-	);
+  return (
+    <Layout>
+      <box flexDirection="column">
+        <box flexDirection="row">{<PullRequestManager />}</box>
+      </box>
+      {tabFocusStore.current === "ask-login" && <GhLogin />}
+      {tabFocusStore.current === "choose-theme" && <ThemeChooser />}
+      {tabFocusStore.current === "help" && <HelpModal />}
+    </Layout>
+  );
 }
 
 const renderer = await createCliRenderer();
 createRoot(renderer).render(<App />);
 
 process.on("SIGINT", () => {
-	abortAll("SIGINT");
-	process.exit(0);
+  abortAll("SIGINT");
+  process.exit(0);
 });
 
 process.on("SIGTERM", () => {
-	abortAll("SIGTERM");
-	process.exit(0);
+  abortAll("SIGTERM");
+  process.exit(0);
 });

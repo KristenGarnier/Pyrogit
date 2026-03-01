@@ -20,7 +20,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Bun](https://img.shields.io/badge/runtime-Bun-orange.svg)](https://bun.sh)
 
-*Manage your GitHub PRs with style and efficiency*
+_Manage your GitHub PRs with style and efficiency_
 
 [📦 Install](#installation) • [🚀 Usage](#usage) • [✨ Features](#features) • [🛠️ Development](#development)
 
@@ -42,18 +42,21 @@
 ## ✨ Features
 
 ### 🎯 Core Functionality
+
 - **Pull Request Management**: View, filter, and navigate through your GitHub PRs
 - **Real-time Updates**: Live synchronization with GitHub API
 - **Intelligent Filtering**: Search and filter PRs by status, author, labels, and more
 - **Keyboard Navigation**: Full keyboard-driven interface for power users
 
 ### 🎨 User Experience
+
 - **Beautiful TUI**: Modern terminal interface built with [OpenTUI](https://opentui.org)
 - **Multiple Themes**: 20+ built-in themes including Dracula, Nord, Catppuccin, and more
 - **Responsive Design**: Adapts to different terminal sizes
 - **Intuitive Navigation**: Familiar GitHub-like interface in your terminal
 
 ### 🔧 Developer Experience
+
 - **TypeScript**: Full type safety and excellent developer experience
 - **Hot Reload**: Instant updates during development
 - **Comprehensive Testing**: 74 tests with 97%+ code coverage
@@ -68,6 +71,7 @@ curl -fsSL https://raw.githubusercontent.com/KristenGarnier/Pyrogit/main/install
 ```
 
 This will automatically:
+
 - Detect your OS and architecture
 - Download the latest release
 - Install to `/usr/local/bin/pyrogit`
@@ -97,10 +101,10 @@ bun build --compile --outfile pyrogit infrastructure/react/src/index.tsx
 
 ### Supported Platforms
 
-| OS      | Architectures |
-|---------|---------------|
-| Linux   | x64, ARM64    |
-| macOS   | x64, ARM64    |
+| OS    | Architectures |
+| ----- | ------------- |
+| Linux | x64, ARM64    |
+| macOS | x64, ARM64    |
 
 ## 🔐 Configuration
 
@@ -115,6 +119,7 @@ Pyrogit requires a GitHub Personal Access Token to access your repositories:
 ### Theme Configuration
 
 Pyrogit saves your theme preference automatically. Available themes include:
+
 - `catppuccin-mocha` (default)
 - `dracula`
 - `nord`
@@ -136,15 +141,15 @@ bun dev
 
 ### Navigation
 
-| Key | Action |
-|-----|--------|
-| `↑/↓` or `j/k` | Navigate PRs |
-| `o` | Open PR in browser |
-| `c` | Copy PR URL to clipboard |
-| `/` | Search/Filter PRs |
-| `Tab` | Switch between views |
-| `r` | Refresh data |
-| `?` | Show help |
+| Key            | Action                   |
+| -------------- | ------------------------ |
+| `↑/↓` or `j/k` | Navigate PRs             |
+| `o`            | Open PR in browser       |
+| `c`            | Copy PR URL to clipboard |
+| `/`            | Search/Filter PRs        |
+| `Tab`          | Switch between views     |
+| `r`            | Refresh data             |
+| `?`            | Show help                |
 
 ### Filtering & Search
 
@@ -159,7 +164,9 @@ bun dev
 Pyrogit features a modern, GitHub-inspired terminal interface with:
 
 ### 🎭 Themes
+
 Choose from 20+ beautiful themes:
+
 - 🌙 **Dracula** - Dark and mysterious
 - ❄️ **Nord** - Arctic-inspired cool tones
 - 🐱 **Catppuccin** - Warm and cozy
@@ -167,6 +174,7 @@ Choose from 20+ beautiful themes:
 - And many more...
 
 ### 📊 Pull Request Display
+
 - **Status indicators**: Open, merged, closed
 - **Author avatars**: Visual identification
 - **Labels and milestones**: Color-coded organization

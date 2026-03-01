@@ -48,6 +48,7 @@ toast.clear();
 ## Store Structure
 
 The toast store (`stores/toast.store.ts`) contains:
+
 - `toasts`: Array of active toast objects
 - `addToast()`: Add new toast with auto-removal
 - `removeToast()`: Remove specific toast by ID
@@ -56,6 +57,7 @@ The toast store (`stores/toast.store.ts`) contains:
 ## Integration
 
 The toast system is integrated into:
+
 - `ToastContainer` component renders all active toasts
 - `Layout` component includes the container
 - `App` component demonstrates usage with loading states

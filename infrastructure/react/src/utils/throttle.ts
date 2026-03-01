@@ -1,17 +1,17 @@
 export function throttle<T extends (...args: unknown[]) => void>(
-	fn: T,
-	delay = 300,
+  fn: T,
+  delay = 300,
 ): (...args: Parameters<T>) => void {
-	let locked = false;
+  let locked = false;
 
-	return (...args: Parameters<T>) => {
-		if (locked) return;
+  return (...args: Parameters<T>) => {
+    if (locked) return;
 
-		locked = true;
-		fn(...args);
+    locked = true;
+    fn(...args);
 
-		setTimeout(() => {
-			locked = false;
-		}, delay);
-	};
+    setTimeout(() => {
+      locked = false;
+    }, delay);
+  };
 }
