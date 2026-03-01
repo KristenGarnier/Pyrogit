@@ -1,6 +1,13 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": null,
+  "plugins": [
+    "react",
+    "react-perf",
+    "import",
+    "vitest",
+    "promise",
+    "node"
+  ],
   "categories": {},
   "rules": {},
   "settings": {
