@@ -53,9 +53,10 @@ export function createListFocusStore<T>(initialValue?: T) {
     current: initialValueFactory(initialValue),
 
     next: (direction, items) =>
-      set((state) => ({
-        current: nextItem(items, state.current, direction),
-      })),
+      set((state) => {
+        const next = nextItem(items, state.current, direction);
+        return { current: next };
+      }),
 
     reset: () => set({ current: initialValueFactory(initialValue) }),
   }));

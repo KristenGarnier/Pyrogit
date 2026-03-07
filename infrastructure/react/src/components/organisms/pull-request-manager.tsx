@@ -114,7 +114,7 @@ export function PullRequestManager() {
     }
   });
 
-  const widths = calculateColumnWidths(prs);
+  const widths = useMemo(() => calculateColumnWidths(prs), [prs]);
 
   return (
     <box

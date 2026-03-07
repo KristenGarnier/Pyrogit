@@ -1,6 +1,6 @@
 import clipboard from "clipboardy";
-import dayjs from "dayjs";
 import open from "open";
+import { memo, useMemo } from "react";
 import { format } from "timeago.js";
 import type { ChangeRequest } from "../../../../../domain/change-request";
 import { useTheme } from "../../hooks/use-theme";
@@ -11,7 +11,7 @@ import { getAuthorColor } from "../../utils/author-color.utils";
 import type { ColumnKey } from "../../utils/column-width-calculator";
 import { truncateText } from "../../utils/column-width-calculator";
 import { isRecent } from "../../utils/date.utils";
-import { getReviewStatusConfig, getReviewStatusConfigMe } from "../../utils/review-status.utils";
+import { getReviewStatusConfigMe } from "../../utils/review-status.utils";
 import { throttle } from "../../utils/throttle";
 import { StatusIcon } from "../atoms/status-icon";
 import { ContextMenu, type ContextMenuOption } from "./context-menu";
@@ -23,31 +23,34 @@ interface PullRequestItemProps {
   selected: boolean;
 }
 
-export function PullRequestItem({ item, widths, selected }: PullRequestItemProps) {
+function PullRequestItemComponent({ item, widths, selected }: PullRequestItemProps) {
   const { theme } = useTheme();
   const tabFocusStore = useTabFocus();
   const toastStore = useToastActions();
   const userStore = useUserStore();
 
-  const menuOptions: ContextMenuOption[] = [
-    {
-      id: "browser",
-      title: "Open in browser",
-      icon: "󰏌",
-      onSelect: throttle(() => {
-        void open(item.webUrl);
-      }, 1000),
-    },
-    {
-      id: "copy",
-      title: "Copy branch name",
-      icon: "",
-      onSelect: throttle(() => {
-        void clipboard.write(item.branch);
-        toastStore.info("Branch name copied to clipboard");
-      }, 1000),
-    },
-  ];
+  const menuOptions: ContextMenuOption[] = useMemo(
+    () => [
+      {
+        id: "browser",
+        title: "Open in browser",
+        icon: "󰏌",
+        onSelect: throttle(() => {
+          void open(item.webUrl);
+        }, 1000),
+      },
+      {
+        id: "copy",
+        title: "Copy branch name",
+        icon: "",
+        onSelect: throttle(() => {
+          void clipboard.write(item.branch);
+          toastStore.info("Branch name copied to clipboard");
+        }, 1000),
+      },
+    ],
+    [item.branch, item.webUrl, toastStore],
+  );
 
   const isContextMenuOpen = tabFocusStore.current === String(item.id.number);
 
@@ -123,3 +126,13 @@ export function PullRequestItem({ item, widths, selected }: PullRequestItemProps
     </box>
   );
 }
+
+function areEqual(prev: PullRequestItemProps, next: PullRequestItemProps): boolean {
+  return (
+    prev.selected === next.selected &&
+    prev.item === next.item &&
+    prev.widths === next.widths
+  );
+}
+
+export const PullRequestItem = memo(PullRequestItemComponent, areEqual);

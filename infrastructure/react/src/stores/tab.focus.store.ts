@@ -32,8 +32,11 @@ export const useTabFocus = create<TabFocusState>((set) => ({
   cycle: () =>
     set((state) => {
       if (!TAB_VALUES.includes(state.current as TabValue)) return state;
+
+      const next = getNextTab(state.current as TabValue, initalFocus);
+
       return {
-        current: getNextTab(state.current as TabValue, initalFocus),
+        current: next,
         previous: state.current,
       };
     }),

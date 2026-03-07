@@ -12,7 +12,6 @@ import { GHPullListError } from "../../../errors/GHPullListError";
 import { GHPullReviewsError } from "../../../errors/GHPullReviewsError";
 import { NoUserError } from "../../../errors/NoUserError";
 import { withAbort } from "../../../react/src/utils/abort-request.utils";
-import { hasBeenUpdatedSince } from "../../../react/src/utils/date.utils";
 import {
   computeMyStatus,
   computeOverallStatus,
@@ -40,7 +39,6 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
 
   async list(
     repo: RepoRef,
-    query: ChangeRequestQuery,
   ): Promise<Result<ChangeRequest[], Error | GHPullListError | GHPullReviewsError>> {
     const me = await this.meProvider();
     if (me.isErr()) return err(new NoUserError("User could not be found"));
@@ -48,7 +46,6 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
     const config = {
       owner: repo.owner,
       repo: repo.repo,
-      since: query.since,
     };
 
     const result = await this.getPullsList({
@@ -68,17 +65,13 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
     return ok(result.value);
   }
 
-  async listClosed(
-    repo: RepoRef,
-    query: ChangeRequestQuery,
-  ): Promise<Result<ChangeRequest[], Error | GHPullListError>> {
+  async listClosed(repo: RepoRef): Promise<Result<ChangeRequest[], Error | GHPullListError>> {
     const me = await this.meProvider();
     if (me.isErr()) return err(new NoUserError("User could not be found"));
 
     const config = {
       owner: repo.owner,
       repo: repo.repo,
-      since: query.since,
     };
 
     const result = await this.getPullsList({

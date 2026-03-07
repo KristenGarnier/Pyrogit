@@ -1,6 +1,6 @@
 import { createCliRenderer } from "@opentui/core";
 import { createRoot, useKeyboard, useRenderer } from "@opentui/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CommandNotice } from "../../../application/commands/command-result";
 import type { ChangeRequestService } from "../../../application/usecases/change-request.service";
 import { GH_TOKEN_ERROR } from "../../errors/GHTokenRetrievalError";
@@ -14,7 +14,7 @@ import { Layout } from "./components/organisms/layout";
 import { PullRequestManager } from "./components/organisms/pull-request-manager";
 import { useCommandBus } from "./services/command-bus";
 import { useLoadingStore } from "./stores/loading";
-import { useTabFocus } from "./stores/tab.focus.store";
+import { TAB_VALUES, useTabFocus } from "./stores/tab.focus.store";
 import { useToastActions } from "./stores/toast.store";
 import { abortAll } from "./utils/abort-request.utils";
 import { isAction } from "./utils/key-mapper";
@@ -36,6 +36,7 @@ function App() {
   const tabFocusStore = useTabFocus();
   const toast = useToastActions();
   const commandBus = useCommandBus();
+  const isRefreshingRef = useRef(false);
 
   const [instanceCRService, setCRServiceInstance] = useState<ChangeRequestService | undefined>();
   //
@@ -78,6 +79,15 @@ function App() {
   useKeyboard((key) => {
     if (tabFocusStore.disabled) return;
 
+    const isPaneFocused = TAB_VALUES.includes(tabFocusStore.current as (typeof TAB_VALUES)[number]);
+
+    if (isAction(key.name, "quit")) {
+      if (!isPaneFocused) return;
+      abortAll("keyboard-quit");
+      renderer.destroy();
+      return;
+    }
+
     if (isAction(key.name, "tab")) {
       tabFocusStore.cycle();
     }
@@ -90,6 +100,11 @@ function App() {
       if (!instanceCRService)
         return toast.warning("Instance not yet initialized, retry in few seconds");
 
+      if (isRefreshingRef.current) {
+        toast.warning("A refresh request is already in progress");
+        return;
+      }
+
       loadingStore.start("Updating prs");
       toast.info("Fetching updated prs");
       refresh(instanceCRService);
@@ -97,6 +112,13 @@ function App() {
   });
 
   async function refresh(instance: ChangeRequestService) {
+    if (isRefreshingRef.current) {
+      toast.warning("A refresh request is already in progress");
+      return;
+    }
+
+    isRefreshingRef.current = true;
+
     try {
       const result = await commandBus.execute(
         new RefreshChangeRequestsCommand(instance),
@@ -109,6 +131,7 @@ function App() {
 
       dispatchNotices(result.value.notices, toast);
     } finally {
+      isRefreshingRef.current = false;
       if (!instanceCRService) setCRServiceInstance(instance);
       loadingStore.stop();
     }
@@ -131,10 +154,10 @@ createRoot(renderer).render(<App />);
 
 process.on("SIGINT", () => {
   abortAll("SIGINT");
-  process.exit(0);
+  renderer.destroy();
 });
 
 process.on("SIGTERM", () => {
   abortAll("SIGTERM");
-  process.exit(0);
+  renderer.destroy();
 });
