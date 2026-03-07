@@ -38,6 +38,7 @@ function App() {
   useEffect(() => {
     async function run() {
       loadingStore.start("Loading the app");
+      await useUserStore.getState().hydrate();
       const initResult = await Pyro.init();
       if (initResult.isErr()) {
         const error = initResult.error;

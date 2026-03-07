@@ -1,39 +1,37 @@
-import path from "node:path";
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
 import type { UserRef } from "../../../../domain/change-request";
-import { FileStorage } from "../../../services/storage/file.storage";
-import { AppDirectories } from "../../../services/storage/locator.storage";
-import { zustandFileStorage } from "../utils/zustand-file-storage.utils";
-
-const directory = new AppDirectories("pyrogit");
-const storage = new FileStorage(path.join(directory.getPath("cache"), "user.enc"));
+import { currentUserService } from "../services/current-user.service";
 
 type UserState = {
-  user: UserRef | null;
+	user: UserRef | null;
 
-  set: (user: UserRef) => void;
-  reset: () => void;
+	hydrate: () => Promise<void>;
+	set: (user: UserRef) => void;
+	reset: () => void;
 };
 
-export const useUserStore = create<UserState>()(
-  persist(
-    (set) => ({
-      user: null,
+const currentUserResult = currentUserService.get();
 
-      set: (user: UserRef) =>
-        set({
-          user: user,
-        }),
+export const useUserStore = create<UserState>((set) => ({
+	user: currentUserResult.isOk() ? currentUserResult.value : null,
 
-      reset: () =>
-        set({
-          user: null,
-        }),
-    }),
-    {
-      name: "user-persistor",
-      storage: createJSONStorage(zustandFileStorage(storage)),
-    },
-  ),
-);
+	hydrate: async () => {
+		const result = await currentUserService.hydrate();
+		if (result.isErr()) {
+			set({ user: null });
+			return;
+		}
+
+		set({ user: result.value });
+	},
+
+	set: (user: UserRef) => {
+		void currentUserService.set(user);
+		set({ user });
+	},
+
+	reset: () => {
+		void currentUserService.reset();
+		set({ user: null });
+	},
+}));
