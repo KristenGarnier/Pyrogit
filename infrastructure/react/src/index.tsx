@@ -1,32 +1,41 @@
 import { createCliRenderer } from "@opentui/core";
 import { createRoot, useKeyboard, useRenderer } from "@opentui/react";
 import { useEffect, useState } from "react";
+import type { CommandNotice } from "../../../application/commands/command-result";
 import type { ChangeRequestService } from "../../../application/usecases/change-request.service";
 import { GH_TOKEN_ERROR } from "../../errors/GHTokenRetrievalError";
 import { isTaggedError } from "../../errors/TaggedError";
+import { InitAppCommand } from "./commands/init-app.command";
+import { RefreshChangeRequestsCommand } from "./commands/refresh-change-requests.command";
 import { GhLogin } from "./components/molecules/gh-login";
 import { HelpModal } from "./components/molecules/help-modal";
 import { ThemeChooser } from "./components/molecules/theme-chooser";
 import { Layout } from "./components/organisms/layout";
 import { PullRequestManager } from "./components/organisms/pull-request-manager";
-import { Pyrogit } from "./services/pyrogit";
-import { useChangeRequestStore } from "./stores/changeRequest.store";
+import { useCommandBus } from "./services/command-bus";
 import { useLoadingStore } from "./stores/loading";
 import { useTabFocus } from "./stores/tab.focus.store";
-import { useThemeStore } from "./stores/theme.store";
 import { useToastActions } from "./stores/toast.store";
-import { useUserStore } from "./stores/user.store";
 import { abortAll } from "./utils/abort-request.utils";
 import { isAction } from "./utils/key-mapper";
 
-const Pyro = new Pyrogit();
+function dispatchNotices(
+  notices: CommandNotice[],
+  toast: ReturnType<typeof useToastActions>,
+) {
+  for (const notice of notices) {
+    if (notice.level === "success") toast.success(notice.message);
+    if (notice.level === "info") toast.info(notice.message);
+    if (notice.level === "warning") toast.warning(notice.message);
+    if (notice.level === "error") toast.error(notice.message);
+  }
+}
 
 function App() {
   const loadingStore = useLoadingStore();
-  const prStore = useChangeRequestStore();
   const tabFocusStore = useTabFocus();
   const toast = useToastActions();
-  const userStore = useUserStore();
+  const commandBus = useCommandBus();
 
   const [instanceCRService, setCRServiceInstance] = useState<ChangeRequestService | undefined>();
   //
@@ -39,11 +48,8 @@ function App() {
   useEffect(() => {
     async function run() {
       loadingStore.start("Loading the app");
-      await useThemeStore.getState().hydrate();
-      await useChangeRequestStore.getState().hydrate();
-      await useUserStore.getState().hydrate();
 
-      const initResult = await Pyro.init();
+      const initResult = await commandBus.execute(new InitAppCommand());
       if (initResult.isErr()) {
         const error = initResult.error;
         if (isTaggedError(error) && error._tag === GH_TOKEN_ERROR) {
@@ -56,11 +62,18 @@ function App() {
         return;
       }
 
-      const instance = initResult.value;
-      await launch(instance);
+      dispatchNotices(initResult.value.notices, toast);
+      const instance = initResult.value.data.service;
+      await refresh(instance);
     }
     run().finally(loadingStore.stop);
-  }, [loadingStore.stop, loadingStore.start, toast.error, tabFocusStore.focusCustom]);
+  }, [
+    commandBus,
+    loadingStore.stop,
+    loadingStore.start,
+    toast,
+    tabFocusStore.focusCustom,
+  ]);
 
   useKeyboard((key) => {
     if (tabFocusStore.disabled) return;
@@ -79,35 +92,22 @@ function App() {
 
       loadingStore.start("Updating prs");
       toast.info("Fetching updated prs");
-      launch(instanceCRService);
+      refresh(instanceCRService);
     }
   });
 
-  async function launch(instance: ChangeRequestService) {
+  async function refresh(instance: ChangeRequestService) {
     try {
-      const [updated, closed] = await Promise.all([
-        instance.list({}),
-        prStore.prs.length > 0 ? instance.listClosed({}) : Promise.resolve([]),
-      ]);
-      prStore.upsertPRs(updated);
-      prStore.deletePRs(closed);
+      const result = await commandBus.execute(
+        new RefreshChangeRequestsCommand(instance),
+      );
 
-      if (!updated) {
-        toast.info("There are no pull requests to load");
-        return;
-      }
-      toast.success("Pull requests loaded successfully");
-
-      const user = await instance.getUser();
-      if (!user) {
-        toast.error("Could not load user");
+      if (result.isErr()) {
+        toast.error("Failed to refresh pull requests");
         return;
       }
 
-      if (userStore.user) return;
-
-      userStore.set(user);
-      toast.success("User loaded successfully");
+      dispatchNotices(result.value.notices, toast);
     } finally {
       if (!instanceCRService) setCRServiceInstance(instance);
       loadingStore.stop();
