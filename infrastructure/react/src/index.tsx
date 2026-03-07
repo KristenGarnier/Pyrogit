@@ -13,6 +13,7 @@ import { Pyrogit } from "./services/pyrogit";
 import { useChangeRequestStore } from "./stores/changeRequest.store";
 import { useLoadingStore } from "./stores/loading";
 import { useTabFocus } from "./stores/tab.focus.store";
+import { useThemeStore } from "./stores/theme.store";
 import { useToastActions } from "./stores/toast.store";
 import { useUserStore } from "./stores/user.store";
 import { abortAll } from "./utils/abort-request.utils";
@@ -38,6 +39,7 @@ function App() {
   useEffect(() => {
     async function run() {
       loadingStore.start("Loading the app");
+      await useThemeStore.getState().hydrate();
       await useChangeRequestStore.getState().hydrate();
       await useUserStore.getState().hydrate();
       const initResult = await Pyro.init();
