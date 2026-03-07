@@ -56,14 +56,9 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
       state: "open",
       per_page: 100,
     }).andThen(({ data: prs }) => {
-      const prsSince = prs.filter((pr) =>
-        query.since ? hasBeenUpdatedSince(new Date(pr.updated_at), query.since) : true,
-      );
-      if (prsSince.length === 0) return ok([]);
-
       return this.getReviewsList({
         config: { ...config },
-        prs: prsSince,
+        prs,
         repo,
         me: me.value,
       });
@@ -91,12 +86,7 @@ export class GitHubChangeRequestRepository implements ChangeRequestRepository {
       state: "closed",
       per_page: 100,
     }).andThen(({ data: prs }) => {
-      const prsSince = prs.filter((pr) =>
-        query.since ? hasBeenUpdatedSince(new Date(pr.updated_at), query.since) : true,
-      );
-      if (prsSince.length === 0) return ok([]);
-
-      const changeRequest = prsSince.map((pr) => this.mapGitHubPR(repo, me.value, pr, []));
+      const changeRequest = prs.map((pr) => this.mapGitHubPR(repo, me.value, pr, []));
 
       return ok(changeRequest);
     });
