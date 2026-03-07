@@ -1,4 +1,4 @@
-import { err, ok, type Result } from "neverthrow";
+import { err, ok, Result, type Result as ResultType } from "neverthrow";
 import type { UserRef } from "../../domain/change-request";
 import type { Storage } from "../../infrastructure/services/storage/storage.interface";
 
@@ -19,11 +19,11 @@ export class CurrentUserService {
 
 	constructor(private readonly deps: Deps) {}
 
-	get(): Result<UserRef | null, Error> {
+	get(): ResultType<UserRef | null, Error> {
 		return ok(this.currentUser);
 	}
 
-	async hydrate(): Promise<Result<UserRef | null, Error>> {
+	async hydrate(): Promise<ResultType<UserRef | null, Error>> {
 		if (this.hydrated) return ok(this.currentUser);
 
 		const result = await this.deps.storage.read();
@@ -34,20 +34,20 @@ export class CurrentUserService {
 			return ok(null);
 		}
 
-		try {
-			const parsed = JSON.parse(result.value) as unknown;
-			this.currentUser = isUserRef(parsed) ? parsed : null;
-			return ok(this.currentUser);
-		} catch (error: unknown) {
-			const e = error instanceof Error ? error : new Error(String(error));
+		const parsedResult = Result.fromThrowable(
+			() => JSON.parse(result.value) as unknown,
+			(error) => new Error("Could not parse current user from storage", { cause: error }),
+		)();
+		if (parsedResult.isErr()) {
 			this.currentUser = null;
-			return err(
-				new Error("Could not parse current user from storage", { cause: e }),
-			);
+			return err(parsedResult.error);
 		}
+
+		this.currentUser = isUserRef(parsedResult.value) ? parsedResult.value : null;
+		return ok(this.currentUser);
 	}
 
-	async set(user: UserRef): Promise<Result<UserRef, Error>> {
+	async set(user: UserRef): Promise<ResultType<UserRef, Error>> {
 		this.currentUser = user;
 		this.hydrated = true;
 		const result = await this.deps.storage.write(JSON.stringify(user));
@@ -56,7 +56,7 @@ export class CurrentUserService {
 		return ok(user);
 	}
 
-	async reset(): Promise<Result<null, Error>> {
+	async reset(): Promise<ResultType<null, Error>> {
 		this.currentUser = null;
 		this.hydrated = true;
 		const result = await this.deps.storage.write("null");

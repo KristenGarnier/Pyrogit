@@ -1,4 +1,4 @@
-import { err, ok, type Result } from "neverthrow";
+import { err, ok, ResultAsync, type Result } from "neverthrow";
 import type { ChangeRequestService } from "../../../../application/usecases/change-request.service";
 import { init } from "../../../app/app";
 import type { GHTokenRetrievalError } from "../../../errors/GHTokenRetrievalError";
@@ -22,23 +22,24 @@ export class Pyrogit {
     return ok(this._isInit);
   }
 
-  async init(): Promise<Result<ChangeRequestService, GHTokenRetrievalError | Error>> {
-    try {
-      const tokenResult = await this.ghauth.getValidToken();
-      if (tokenResult.isErr()) {
-        return err(tokenResult.error);
-      }
+	async init(): Promise<Result<ChangeRequestService, GHTokenRetrievalError | Error>> {
+		const tokenResult = await this.ghauth.getValidToken();
+		if (tokenResult.isErr()) return err(tokenResult.error);
 
-      const token = tokenResult.value;
-      this._pyro = await init(token);
-      await this._pyro.checkAuth();
+		const initResult = await ResultAsync.fromPromise(
+			init(tokenResult.value),
+			(error) => (error instanceof Error ? error : new Error(String(error))),
+		);
+		if (initResult.isErr()) return err(initResult.error);
 
-      return ok(this._pyro);
-    } catch (error: unknown) {
-      let e = new Error("Unspecified Error");
-      if (!(error instanceof Error)) e = new Error(String(error));
+		const service = initResult.value;
+		const authResult = await ResultAsync.fromPromise(
+			service.checkAuth(),
+			(error) => (error instanceof Error ? error : new Error(String(error))),
+		);
+		if (authResult.isErr()) return err(authResult.error);
 
-      return err(error instanceof Error ? error : e);
-    }
-  }
+		this._pyro = service;
+		return ok(service);
+	}
 }
