@@ -1,15 +1,6 @@
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
 import type { ChangeRequest } from "../../../../domain/change-request";
-import { RootLocator } from "../../../services/locator/locators";
-import { createSimpleStorage } from "../utils/init-file-storage.utils";
-import { zustandFileStorage } from "../utils/zustand-file-storage.utils";
-
-const resultProjectPathName = new RootLocator().findDir();
-let projectPathName = "unknown-prs.enc";
-if (resultProjectPathName.isOk()) {
-  projectPathName = `${resultProjectPathName.value.split("/")[resultProjectPathName.value.split("/").length - 1]}-prs.enc`;
-}
+import { changeRequestCacheService } from "../services/change-request-cache.service";
 
 interface ChangeRequestStore {
   prs: ChangeRequest[];
@@ -18,6 +9,7 @@ interface ChangeRequestStore {
   error: string | null;
   filter: string;
 
+  hydrate: () => Promise<void>;
   setPRs(prs: ChangeRequest[]): void;
   upsertPR(pr: ChangeRequest): void;
   upsertPRs(prs: ChangeRequest[]): void;
@@ -30,67 +22,59 @@ interface ChangeRequestStore {
   setFilter(filter: string): void;
 }
 
-export const useChangeRequestStore = create<ChangeRequestStore>()(
-  persist(
-    (set, get) => ({
-      prs: [],
-      loading: false,
-      error: null,
-      filter: "",
+function applyResult(
+  set: (partial: Partial<ChangeRequestStore>) => void,
+  result: ReturnType<typeof changeRequestCacheService.get>,
+) {
+  if (result.isErr()) {
+    set({ error: result.error.message });
+    return;
+  }
 
-      setPRs: (prs) => set({ prs }),
+  set({ prs: result.value, error: null });
+}
 
-      upsertPR: (pr) =>
-        set((state) => {
-          const index = state.prs.findIndex((p) => p.id === pr.id);
-          if (index === -1) {
-            return { prs: [...state.prs, pr] };
-          }
-          const next = [...state.prs];
-          next[index] = pr;
-          return { prs: next };
-        }),
-      upsertPRs: (prs) =>
-        set((state) => {
-          const seen = new Set<number>();
-          const uniquePRs = prs.filter((pr) => {
-            const num = pr.id.number;
-            if (seen.has(num)) return false;
-            seen.add(num);
-            return true;
-          });
-          const indexes = uniquePRs.map((pr) => pr.id.number);
-          const stateFinal = state.prs
-            .filter((pr) => !indexes.includes(pr.id.number))
-            .concat(uniquePRs)
-            .sort((a, b) => b.id.number - a.id.number);
+const initialPRsResult = changeRequestCacheService.get();
 
-          return { prs: stateFinal };
-        }),
+export const useChangeRequestStore = create<ChangeRequestStore>((set) => ({
+  prs: initialPRsResult.isOk() ? initialPRsResult.value : [],
+  loading: false,
+  error: null,
+  filter: "",
 
-      deletePRs: (prs) =>
-        set((state) => {
-          const indexes = prs.map((pr) => pr.id.number);
-          const onlyOpen = state.prs.filter((pr) => !indexes.includes(pr.id.number));
+  hydrate: async () => {
+    const result = await changeRequestCacheService.hydrate();
+    if (result.isErr()) {
+      set({ error: result.error.message });
+      return;
+    }
 
-          return {
-            prs: onlyOpen,
-          };
-        }),
+    set({ prs: result.value, error: null });
+  },
 
-      clearPRs: () => set({ prs: [] }),
+  setPRs: (prs) => {
+    applyResult(set, changeRequestCacheService.setPRs(prs));
+  },
 
-      setLoading: (loading) => set({ loading }),
+  upsertPR: (pr) => {
+    applyResult(set, changeRequestCacheService.upsertPR(pr));
+  },
 
-      setError: (error) => set({ error }),
+  upsertPRs: (prs) => {
+    applyResult(set, changeRequestCacheService.upsertPRs(prs));
+  },
 
-      setFilter: (filter) => set({ filter }),
-    }),
-    {
-      name: "pr-persistor",
-      storage: createJSONStorage(
-        zustandFileStorage(createSimpleStorage("pyrogit", "cache", projectPathName)),
-      ),
-    },
-  ),
-);
+  deletePRs: (prs) => {
+    applyResult(set, changeRequestCacheService.deletePRs(prs));
+  },
+
+  clearPRs: () => {
+    applyResult(set, changeRequestCacheService.clearPRs());
+  },
+
+  setLoading: (loading) => set({ loading }),
+
+  setError: (error) => set({ error }),
+
+  setFilter: (filter) => set({ filter }),
+}));

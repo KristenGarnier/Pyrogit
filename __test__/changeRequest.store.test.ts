@@ -25,12 +25,10 @@ describe("useChangeRequestStore", () => {
 
   beforeEach(() => {
     // Reset store state before each test
-    useChangeRequestStore.setState({
-      prs: [],
-      loading: false,
-      error: null,
-      filter: "",
-    });
+    useChangeRequestStore.getState().clearPRs();
+    useChangeRequestStore.getState().setLoading(false);
+    useChangeRequestStore.getState().setError(null);
+    useChangeRequestStore.getState().setFilter("");
   });
 
   it("should have initial state", () => {
