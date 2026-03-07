@@ -42,6 +42,7 @@ function App() {
       await useThemeStore.getState().hydrate();
       await useChangeRequestStore.getState().hydrate();
       await useUserStore.getState().hydrate();
+
       const initResult = await Pyro.init();
       if (initResult.isErr()) {
         const error = initResult.error;

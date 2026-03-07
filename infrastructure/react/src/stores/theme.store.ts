@@ -1,18 +1,16 @@
 import { create } from "zustand";
 import { themePreferenceService } from "../services/theme-preference.service";
 export type { KeyThemeMap, Theme } from "../services/theme-catalog.service";
-import type { KeyThemeMap, Theme } from "../services/theme-catalog.service";
+import type { Theme } from "../services/theme-catalog.service";
 
 type ThemeStore = {
 	currentTheme: Theme;
 	themeName: string;
 
 	hydrate: () => Promise<void>;
-	setTheme: (themeName: string) => Promise<void>;
+	selectTheme: (themeName: string) => Promise<void>;
 	getCurrentTheme: () => Theme;
 	getThemeName: () => string;
-
-	switchToTheme: (themeName: KeyThemeMap) => Promise<void>;
 	getAvailableThemes: () => string[];
 };
 
@@ -39,7 +37,7 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
 		applySelection(set, result.value);
 	},
 
-	setTheme: async (themeName: string) => {
+	selectTheme: async (themeName: string) => {
 		const result = await themePreferenceService.setThemeName(themeName);
 		if (result.isErr()) return;
 
@@ -48,13 +46,6 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
 
 	getCurrentTheme: () => get().currentTheme,
 	getThemeName: () => get().themeName,
-
-	switchToTheme: async (themeName: KeyThemeMap) => {
-		const result = await themePreferenceService.setThemeName(themeName);
-		if (result.isErr()) return;
-
-		applySelection(set, result.value);
-	},
 
 	getAvailableThemes: () => {
 		const result = themePreferenceService.getAvailableThemes();

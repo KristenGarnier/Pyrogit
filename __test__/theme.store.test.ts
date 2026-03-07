@@ -32,7 +32,7 @@ describe("useThemeStore", () => {
   it("should set theme", async () => {
     const themeName = "tokyo-night";
 
-    await useThemeStore.getState().setTheme(themeName);
+    await useThemeStore.getState().selectTheme(themeName);
 
     const state = useThemeStore.getState();
     expect(state.currentTheme).toBe(themeMap["tokyo-night"]);
@@ -52,7 +52,7 @@ describe("useThemeStore", () => {
   });
 
   it("should switch to valid theme", async () => {
-    await useThemeStore.getState().switchToTheme("tokyo-night");
+    await useThemeStore.getState().selectTheme("tokyo-night");
 
     const state = useThemeStore.getState();
     expect(state.currentTheme).toBe(themeMap["tokyo-night"]);
@@ -60,7 +60,7 @@ describe("useThemeStore", () => {
   });
 
   it("should fallback to default theme when setTheme receives invalid name", async () => {
-    await useThemeStore.getState().setTheme("invalid-theme");
+    await useThemeStore.getState().selectTheme("invalid-theme");
 
     const state = useThemeStore.getState();
     expect(state.currentTheme).toBe(themeMap["catppuccin-mocha"]);
@@ -78,11 +78,11 @@ describe("useThemeStore", () => {
 
   it("should handle theme switching cycle", async () => {
     // Switch to different theme
-    await useThemeStore.getState().switchToTheme("dracula");
+    await useThemeStore.getState().selectTheme("dracula");
     expect(useThemeStore.getState().themeName).toBe("dracula");
 
     // Switch back
-    await useThemeStore.getState().switchToTheme("catppuccin-mocha");
+    await useThemeStore.getState().selectTheme("catppuccin-mocha");
     expect(useThemeStore.getState().themeName).toBe("catppuccin-mocha");
   });
 });

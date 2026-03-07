@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useScopedStore } from "../../hooks/use-scoped-store";
 import { useTheme } from "../../hooks/use-theme";
 import { useTabFocus } from "../../stores/tab.focus.store";
-import { type KeyThemeMap, useThemeStore } from "../../stores/theme.store";
+import { useThemeStore } from "../../stores/theme.store";
 import { useToastActions } from "../../stores/toast.store";
 import { isAction, matchKey, type YDirectionsActions } from "../../utils/key-mapper";
 import { Modal } from "./modal";
@@ -19,15 +19,15 @@ export function ThemeChooser() {
     return themesAvailable.map((theme) => ({
       name: theme,
       onSelect: () => {
-        themeStore.switchToTheme(theme as KeyThemeMap);
+        void themeStore.selectTheme(theme);
         tabFocusStore.stopCustom();
         toastActions.success(`Switched to ${theme} theme`);
       },
       onFocus: () => {
-        themeStore.switchToTheme(theme as KeyThemeMap);
+        void themeStore.selectTheme(theme);
       },
     }));
-  }, [themesAvailable, tabFocusStore.stopCustom, themeStore.switchToTheme, toastActions.success]);
+  }, [themesAvailable, tabFocusStore, themeStore, toastActions]);
 
   const itemFocusStore = useScopedStore<{
     name: string;
@@ -56,7 +56,7 @@ export function ThemeChooser() {
   return (
     <Modal
       onClose={() => {
-        themeStore.switchToTheme(initialTheme as KeyThemeMap);
+        void themeStore.selectTheme(initialTheme);
         tabFocusStore.stopCustom();
       }}
     >

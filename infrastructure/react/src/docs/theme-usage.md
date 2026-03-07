@@ -110,13 +110,15 @@ Each theme follows a consistent structure:
 - Themes are saved to `~/.pyrogit/config/theme.json`
 - Your choice is automatically restored on startup
 - File-based storage for reliability
+- Theme lookup is handled by `theme-catalog.service.ts`
+- Theme preference hydration/persistence is handled by `theme-preference.service.ts`
 
 ### Adding New Themes
 
 1. Create a new file in `src/themes/`
 2. Export a theme object following the structure above
 3. Add import and export in `themes/index.ts`
-4. Add theme to `themeMap` in `stores/theme.store.ts`
+4. Add theme to `themeMap` in `services/theme-catalog.service.ts`
 5. Add keyboard mapping in `ThemeSwitcher` component
 
 ## 🎯 Recommended Themes
