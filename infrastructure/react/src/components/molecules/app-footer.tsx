@@ -14,7 +14,7 @@ export function AppFooter() {
           <strong>PyroGit</strong>
         </text>
         <text fg={currentTheme.muted}>
-          <em>v0.5.0-alpha</em>
+          <em>v0.6.1-alpha</em>
         </text>
         <ThemeSwitcher />
 
